@@ -3,7 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>飲食質地評估表</title>
+<title>飲食質地評估表 (雲端同步版)</title>
+
+<script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore-compat.js"></script>
+
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:"Microsoft JhengHei","PingFang TC",sans-serif;color:#222;font-size:14px;background:#f5f5f2;padding:20px;}
@@ -14,6 +19,8 @@ body{font-family:"Microsoft JhengHei","PingFang TC",sans-serif;color:#222;font-s
 .sub-title{font-size:13px;color:#666;margin-top:4px;}
 .mgr-btn{position:absolute;right:0;top:0;background:#fff;border:1px solid #d0d0c8;border-radius:6px;padding:5px 12px;font-size:12px;cursor:pointer;color:#555;}
 .mgr-btn:hover{background:#f0f0ec;border-color:#378ADD;color:#185FA5;}
+.logout-btn{position:absolute;left:0;top:0;background:#FCEBEB;border:1px solid #F09595;border-radius:6px;padding:5px 12px;font-size:12px;cursor:pointer;color:#A32D2D;}
+.logout-btn:hover{background:#F7C1C1;}
 .section{background:#fff;border:1px solid #e0e0d8;border-radius:8px;padding:.75rem 1rem;margin-bottom:.6rem;}
 .section-title{font-size:14px;font-weight:bold;margin-bottom:10px;padding:7px 12px;background:#f0f0ec;border-left:4px solid #378ADD;border-radius:4px;color:#1a1a1a;}
 .field-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-bottom:8px;}
@@ -56,14 +63,14 @@ tr:hover td{background:#fafaf8;}
 .tag{display:inline-flex;align-items:center;gap:3px;background:#E6F1FB;color:#185FA5;font-size:11px;padding:2px 7px;border-radius:9px;}
 .tag-x{cursor:pointer;font-size:13px;color:#378ADD;}
 .tag-x:hover{color:#A32D2D;}
-.records-bar{display:flex;align-items:center;gap:8px;margin-bottom:.7rem;background:#f0f4fb;border:1px solid #c8d8f0;border-radius:8px;padding:8px 12px;}
-.records-bar label{font-size:12px;color:#555;white-space:nowrap;}
-.records-bar select{flex:1;font-size:13px;max-width:260px;}
-.rec-btn{background:#fff;border:1px solid #85B7EB;color:#185FA5;border-radius:5px;padding:5px 12px;font-size:12px;cursor:pointer;white-space:nowrap;}
-.rec-btn:hover{background:#E6F1FB;}
-.rec-btn.danger{border-color:#F09595;color:#A32D2D;}
+.records-bar{display:flex;align-items:center;gap:8px;margin-bottom:.7rem;background:#E6F1FB;border:1px solid #85B7EB;border-radius:8px;padding:10px 12px;}
+.rec-btn{background:#185FA5;border:none;color:#fff;border-radius:5px;padding:6px 14px;font-size:13px;cursor:pointer;white-space:nowrap;font-weight:bold;}
+.rec-btn:hover{background:#0C447C;}
+.rec-btn.outline{background:#fff;color:#185FA5;border:1px solid #185FA5;}
+.rec-btn.outline:hover{background:#ddeeff;}
+.rec-btn.danger{background:#fff;border:1px solid #F09595;color:#A32D2D;}
 .rec-btn.danger:hover{background:#FCEBEB;}
-.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:2000;}
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2000;}
 .overlay.show{display:flex;align-items:center;justify-content:center;}
 .modal{background:#fff;border-radius:12px;padding:1.5rem;width:650px;max-width:95vw;max-height:88vh;overflow-y:auto;}
 .modal-title{font-size:15px;font-weight:bold;margin-bottom:1rem;padding-bottom:8px;border-bottom:1px solid #e8e8e8;display:flex;justify-content:space-between;align-items:center;}
@@ -98,6 +105,14 @@ tr:hover td{background:#fafaf8;}
 .reset-btn:hover{background:#f5f5f5;}
 .print-disease{display:none;}
 
+/* 登入畫面專屬 CSS */
+#loginOverlay { display:flex; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:9999; align-items:center; justify-content:center; flex-direction:column; }
+.login-box { background:#fff; padding:2.5rem 2rem; border-radius:12px; width:340px; text-align:center; box-shadow:0 10px 25px rgba(0,0,0,0.3); }
+.login-box h2 { margin-bottom:1.5rem; color:#185FA5; font-size:20px; }
+.login-box input { width:100%; margin-bottom:1.2rem; padding:12px; font-size:14px; border:1px solid #ccc; border-radius:6px; background:#fafaf8; }
+.login-box button { width:100%; padding:12px; background:#185FA5; color:#fff; font-size:15px; border:none; border-radius:6px; cursor:pointer; font-weight:bold; }
+.login-box button:hover { background:#0C447C; }
+
 @media print{
   @page{size:A4;margin:10mm 14mm;}
   body{background:#fff;padding:0;font-size:13px;}
@@ -105,7 +120,7 @@ tr:hover td{background:#fafaf8;}
   .form-header{padding-bottom:5px;margin-bottom:6px;}
   .form-header .sub-title{font-size:13px;}
   .org-select{font-size:16px;}
-  .mgr-btn,.btn-row,.overlay,.records-bar{display:none!important;}
+  .mgr-btn,.logout-btn,.btn-row,.overlay,.records-bar{display:none!important;}
   .section{padding:.5rem .8rem;margin-bottom:.45rem;border-radius:4px;page-break-inside:avoid;}
   .section-title{font-size:14px;margin-bottom:6px;padding:5px 10px;background:#f0f0ec;border-left:4px solid #378ADD;border-radius:3px;}
   .field label{font-size:11px;}
@@ -127,27 +142,38 @@ tr:hover td{background:#fafaf8;}
 </style>
 </head>
 <body>
+
+<div id="loginOverlay">
+  <div class="login-box">
+    <h2>🔒 系統登入</h2>
+    <input type="email" id="loginEmail" placeholder="請輸入 Email 帳號">
+    <input type="password" id="loginPwd" placeholder="請輸入密碼">
+    <button onclick="doLogin()">登 入</button>
+  </div>
+</div>
+
 <div class="form-wrap">
 
 <div class="form-header">
+  <button class="logout-btn" onclick="doLogout()">🚪 登出</button>
   <select class="org-select" id="orgSelect" onchange="onOrgChange()">
     <option value="">── 請選擇機構 ──</option>
   </select>
-  <div class="sub-title">飲食質地評估表</div>
+  <div class="sub-title">飲食質地評估表 (雲端版)</div>
   <button class="mgr-btn" onclick="openMgr()">⚙ 管理機構與人員</button>
 </div>
 
 <div class="records-bar">
-  <div style="display:flex;flex-direction:column;gap:5px;width:100%;">
+  <div style="display:flex;flex-direction:column;gap:8px;width:100%;">
     <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-      <span style="font-size:12px;color:#333;white-space:nowrap;font-weight:bold;">📁 個案存檔</span>
-      <span id="recOrgLabel" style="font-size:11px;color:#185FA5;background:#ddeeff;border-radius:4px;padding:2px 8px;white-space:nowrap;">請先選擇機構</span>
-      <button class="rec-btn" onclick="saveRecord()" style="margin-left:auto;">💾 儲存目前個案</button>
+      <span style="font-size:13px;color:#185FA5;white-space:nowrap;font-weight:bold;">☁️ 雲端資料庫</span>
+      <span id="recOrgLabel" style="font-size:12px;color:#555;background:#fff;border-radius:4px;padding:3px 8px;white-space:nowrap;">請先選擇機構</span>
+      <button class="rec-btn" onclick="saveRecord()" style="margin-left:auto;">💾 儲存至雲端</button>
     </div>
     <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-      <select id="recordSelect" style="flex:1;min-width:180px;max-width:360px;font-size:13px;"><option value="">── 選擇已儲存個案 ──</option></select>
-      <button class="rec-btn" onclick="loadRecord()">↑ 載入</button>
-      <button class="rec-btn danger" onclick="deleteRecord()">✕ 刪除</button>
+      <select id="recordSelect" style="flex:1;min-width:180px;max-width:360px;font-size:13px;"><option value="">── 選擇雲端儲存個案 ──</option></select>
+      <button class="rec-btn outline" onclick="loadRecord()">↓ 載入資料</button>
+      <button class="rec-btn danger" onclick="deleteRecord()">✕ 永久刪除</button>
     </div>
   </div>
 </div>
@@ -183,7 +209,7 @@ tr:hover td{background:#fafaf8;}
   
   <div class="field-row" style="margin-bottom:12px; background:#fafaf8; padding:8px; border:1px solid #e0e0d8; border-radius:5px;">
     <div class="field">
-      <label>鼓頰評估</label>
+      <label>鼓頰評估 (臉部肌力與協調)</label>
       <select id="cheekPuff">
         <option value="">請選擇</option>
         <option>雙側正常</option>
@@ -192,7 +218,7 @@ tr:hover td{background:#fafaf8;}
       </select>
     </div>
     <div class="field">
-      <label>舌頭靈活度</label>
+      <label>舌頭靈活度 (食團形成與後送)</label>
       <select id="tongueFlex">
         <option value="">請選擇</option>
         <option>正常 (上下左右移動自如)</option>
@@ -276,9 +302,7 @@ tr:hover td{background:#fafaf8;}
 
 <div class="btn-row">
   <button class="print-btn" onclick="doPrint()">列印 / 匯出 PDF</button>
-  <button class="json-btn" onclick="exportJSON()">↓ 匯出 JSON</button>
-  <button class="json-btn" onclick="document.getElementById('jsonImport').click()">↑ 匯入 JSON</button>
-  <input type="file" id="jsonImport" accept=".json" style="display:none;" onchange="importJSON(event)">
+  <button class="json-btn" onclick="exportJSON()">↓ 匯出備份檔</button>
   <button class="reset-btn" onclick="resetForm()">清除重填</button>
 </div>
 </div>
@@ -286,7 +310,7 @@ tr:hover td{background:#fafaf8;}
 <div class="overlay" id="mgrOverlay" onclick="overlayClick(event)">
   <div class="modal">
     <div class="modal-title">
-      <span>⚙ 管理機構與人員</span>
+      <span>⚙ 管理機構與人員 (將同步至雲端)</span>
       <span class="modal-close" onclick="closeMgr()">×</span>
     </div>
     <div class="mgr-sec">
@@ -322,104 +346,213 @@ tr:hover td{background:#fafaf8;}
       </div>
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;">
-      <button class="save-btn" onclick="saveMgr()">儲存並關閉</button>
-      <button class="json-btn" style="padding:7px 16px;font-size:12px;" onclick="exportOrgJSON()">↓ 匯出機構設定</button>
-      <button class="json-btn" style="padding:7px 16px;font-size:12px;" onclick="document.getElementById('orgImport').click()">↑ 匯入機構設定</button>
-      <input type="file" id="orgImport" accept=".json" style="display:none;" onchange="importOrgJSON(event)">
+      <button class="save-btn" onclick="saveMgr()">儲存變更至雲端並關閉</button>
     </div>
   </div>
 </div>
 
 <script>
-var orgs=[{id:'A',name:'大愛社區式長照機構（A單位）'},{id:'B',name:'慈心居家護理所（B單位）'},{id:'C',name:'安心日照中心（C單位）'}];
-var members={A:['陳昭雄','林美惠','王志明','黃淑芬','李建國','張麗珍'],B:['吳明哲','劉淑華','蔡宗翰','許雅婷','鄭文傑'],C:['簡世豪','游淑玲','彭志偉','洪雅文','賴建宏','葉秋月']};
-var mgrActiveOrg='A';
-var STORE_KEY='dietary_records_v2';
+// ==========================================
+// Firebase 雲端資料庫設定區
+// ==========================================
+const firebaseConfig = {
+  apiKey: "AIzaSyA0j-YqXIWtAec8zfo7apVhImTWPtBBZA4",
+  authDomain: "swallowform-cef83.firebaseapp.com",
+  projectId: "swallowform-cef83",
+  storageBucket: "swallowform-cef83.firebasestorage.app",
+  messagingSenderId: "833256269968",
+  appId: "1:833256269968:web:8a761972fbef7f64561015"
+};
 
-function getRecords(){try{return JSON.parse(localStorage.getItem(STORE_KEY)||'{}');}catch(e){return {};}}
-function saveRecords(r){try{localStorage.setItem(STORE_KEY,JSON.stringify(r));}catch(e){alert('儲存空間不足，無法儲存。');}}
+// 初始化 Firebase
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
 
-function currentOrgId(){return document.getElementById('orgSelect').value||'__none__';}
-function currentOrgName(){
-  var id=document.getElementById('orgSelect').value;
-  var found=orgs.find(function(o){return o.id===id;});
-  return found?found.name:'（未選擇機構）';
-}
-
-function renderRecordSelect(){
-  var sel=document.getElementById('recordSelect');
-  var cur=sel.value;
-  sel.innerHTML='<option value="">── 選擇已儲存個案 ──</option>';
-  var r=getRecords();
-  var orgId=currentOrgId();
-  var orgData=r[orgId]||{};
-  var keys=Object.keys(orgData).sort();
-  if(keys.length===0){
-    var opt=document.createElement('option');opt.disabled=true;opt.textContent='（此機構尚無儲存個案）';sel.appendChild(opt);
+// ==========================================
+// 帳號密碼登入邏輯
+// ==========================================
+auth.onAuthStateChanged(user => {
+  if (user) {
+    // 登入成功，隱藏登入畫面，並從雲端讀取機構設定
+    document.getElementById('loginOverlay').style.display = 'none';
+    loadCloudSettings();
   } else {
-    keys.forEach(function(k){
-      var opt=document.createElement('option');opt.value=k;opt.textContent=k;sel.appendChild(opt);
-    });
+    // 未登入，顯示登入畫面
+    document.getElementById('loginOverlay').style.display = 'flex';
   }
-  if(cur)sel.value=cur;
+});
+
+function doLogin() {
+  var email = document.getElementById('loginEmail').value;
+  var pwd = document.getElementById('loginPwd').value;
+  if(!email || !pwd) { alert("請輸入 Email 與密碼"); return; }
+  auth.signInWithEmailAndPassword(email, pwd)
+    .catch(err => alert("登入失敗，請檢查帳號密碼是否正確。(" + err.message + ")"));
 }
 
-function saveRecord(){
-  var data=collectFormData();
-  var name=data.name;
-  if(!name){alert('請先選擇姓名再儲存');return;}
-  var orgId=currentOrgId();
-  var key=name+'（'+(data.assessDate||'無日期')+'）';
-  var r=getRecords();
-  if(!r[orgId])r[orgId]={};
-  r[orgId][key]=data;
-  saveRecords(r);
-  renderRecordSelect();
-  document.getElementById('recordSelect').value=key;
-  alert('已儲存：【'+currentOrgName()+'】'+key);
+function doLogout() {
+  if(confirm("確定要登出嗎？")) {
+    auth.signOut();
+  }
 }
 
-function loadRecord(){
-  var key=document.getElementById('recordSelect').value;
-  if(!key){alert('請先選擇個案');return;}
-  var r=getRecords();
-  var orgId=currentOrgId();
-  var orgData=r[orgId]||{};
-  if(!orgData[key]){alert('找不到此個案');return;}
-  applyFormData(orgData[key]);
+// ==========================================
+// 核心變數與雲端同步邏輯
+// ==========================================
+var orgs = [];
+var members = {};
+var mgrActiveOrg = null;
+
+// 從雲端載入「機構與人員」設定檔
+function loadCloudSettings() {
+  db.collection("system").doc("settings").get().then(doc => {
+    if (doc.exists) {
+      var data = doc.data();
+      orgs = data.orgs || [];
+      members = data.members || {};
+    } else {
+      // 第一次使用，給予預設值並存上雲端
+      orgs = [{id:'A',name:'預設測試機構'}];
+      members = {A:['測試長輩A']};
+      saveCloudSettings();
+    }
+    renderOrgSelect();
+  }).catch(e => {
+    console.error("載入設定失敗", e);
+    alert("無法連線至雲端載入機構設定");
+  });
 }
 
-function deleteRecord(){
-  var key=document.getElementById('recordSelect').value;
-  if(!key){alert('請先選擇個案');return;}
-  if(!confirm('確定刪除「'+key+'」？'))return;
-  var r=getRecords();
-  var orgId=currentOrgId();
-  if(r[orgId])delete r[orgId][key];
-  saveRecords(r);
-  renderRecordSelect();
+// 將「機構與人員」設定檔存回雲端
+function saveCloudSettings() {
+  db.collection("system").doc("settings").set({
+    orgs: orgs,
+    members: members
+  }).catch(e => console.error("儲存設定失敗", e));
 }
 
-function renderOrgSelect(){
-  var sel=document.getElementById('orgSelect'),cur=sel.value;
-  sel.innerHTML='<option value="">── 請選擇機構 ──</option>';
-  orgs.forEach(function(o){var opt=document.createElement('option');opt.value=o.id;opt.textContent=o.name;sel.appendChild(opt);});
-  if(cur)sel.value=cur;
+function currentOrgId() { return document.getElementById('orgSelect').value || '__none__'; }
+function currentOrgName() {
+  var id = document.getElementById('orgSelect').value;
+  var found = orgs.find(o => o.id === id);
+  return found ? found.name : '（未選擇機構）';
 }
-function onOrgChange(){
-  var orgId=document.getElementById('orgSelect').value,sel=document.getElementById('nameSelect');
-  sel.innerHTML='<option value="">── 請選擇姓名 ──</option>';
-  if(!orgId){
-    var lbl=document.getElementById('recOrgLabel');if(lbl){lbl.textContent='請先選擇機構';}
-    document.getElementById('recordSelect').innerHTML='<option value="">── 選擇已儲存個案 ──</option>';
+
+// ==========================================
+// 雲端個案存取邏輯 (取代原本的 localStorage)
+// ==========================================
+function renderRecordSelect() {
+  var sel = document.getElementById('recordSelect');
+  var cur = sel.value;
+  sel.innerHTML = '<option value="">── 讀取雲端資料中... ──</option>';
+  var orgId = currentOrgId();
+  if (!orgId || orgId === '__none__') {
+    sel.innerHTML = '<option value="">── 選擇雲端儲存個案 ──</option>';
     return;
   }
-  (members[orgId]||[]).forEach(function(n){var o=document.createElement('option');o.value=n;o.textContent=n;sel.appendChild(o);});
-  var found=orgs.find(function(o){return o.id===orgId;});
-  var lbl=document.getElementById('recOrgLabel');
-  if(lbl&&found){lbl.textContent='目前機構：'+found.name.replace(/（.*?）/g,'').trim();}
+  
+  // 查詢雲端該機構的所有評估紀錄
+  db.collection("records").where("orgId", "==", orgId).get().then(snap => {
+    sel.innerHTML = '<option value="">── 選擇雲端儲存個案 ──</option>';
+    if (snap.empty) {
+      var opt = document.createElement('option'); opt.disabled = true; opt.textContent = '（此機構尚無儲存個案）'; sel.appendChild(opt);
+    } else {
+      var keys = [];
+      snap.forEach(doc => { keys.push(doc.data().recordKey); });
+      keys.sort().reverse().forEach(k => { // 反向排序讓最新的在上面
+        var opt = document.createElement('option'); opt.value = k; opt.textContent = k; sel.appendChild(opt);
+      });
+      if (cur) sel.value = cur;
+    }
+  }).catch(e => {
+    console.error(e);
+    sel.innerHTML = '<option value="">── 讀取失敗 ──</option>';
+  });
+}
+
+function saveRecord() {
+  var data = collectFormData();
+  var name = data.name;
+  if (!name) { alert('請先選擇姓名再儲存'); return; }
+  
+  var orgId = currentOrgId();
+  var key = name + '（' + (data.assessDate || '無日期') + '）';
+  // 建立在雲端資料庫的唯一文件 ID
+  var docId = orgId + "___" + key; 
+  
+  db.collection("records").doc(docId).set({
+    orgId: orgId,
+    recordKey: key,
+    data: data,
+    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+  }).then(() => {
+    alert('✅ 已成功儲存至雲端：\n【' + currentOrgName() + '】' + key);
+    renderRecordSelect();
+    setTimeout(() => { document.getElementById('recordSelect').value = key; }, 500);
+  }).catch(err => {
+    alert("儲存失敗：" + err.message);
+  });
+}
+
+function loadRecord() {
+  var key = document.getElementById('recordSelect').value;
+  if (!key) { alert('請先選擇個案'); return; }
+  
+  var orgId = currentOrgId();
+  var docId = orgId + "___" + key;
+  
+  db.collection("records").doc(docId).get().then(doc => {
+    if (doc.exists) {
+      applyFormData(doc.data().data);
+      alert("✅ 已從雲端載入資料");
+    } else {
+      alert('在雲端找不到此個案');
+    }
+  }).catch(err => alert("載入失敗：" + err.message));
+}
+
+function deleteRecord() {
+  var key = document.getElementById('recordSelect').value;
+  if (!key) { alert('請先選擇個案'); return; }
+  if (!confirm('⚠️ 警告：確定從雲端永久刪除「' + key + '」嗎？\n刪除後無法復原！')) return;
+  
+  var orgId = currentOrgId();
+  var docId = orgId + "___" + key;
+  
+  db.collection("records").doc(docId).delete().then(() => {
+    renderRecordSelect();
+    resetForm();
+    alert("🗑️ 已從雲端永久刪除");
+  }).catch(err => alert("刪除失敗：" + err.message));
+}
+
+// ==========================================
+// 介面與功能邏輯 (與舊版相同)
+// ==========================================
+function renderOrgSelect() {
+  var sel = document.getElementById('orgSelect'), cur = sel.value;
+  sel.innerHTML = '<option value="">── 請選擇機構 ──</option>';
+  orgs.forEach(o => { var opt = document.createElement('option'); opt.value = o.id; opt.textContent = o.name; sel.appendChild(opt); });
+  if (cur) sel.value = cur;
+}
+
+function onOrgChange() {
+  var orgId = document.getElementById('orgSelect').value, sel = document.getElementById('nameSelect');
+  sel.innerHTML = '<option value="">── 請選擇姓名 ──</option>';
+  if (!orgId) {
+    var lbl = document.getElementById('recOrgLabel'); if (lbl) lbl.textContent = '請先選擇機構';
+    document.getElementById('recordSelect').innerHTML = '<option value="">── 選擇雲端儲存個案 ──</option>';
+    return;
+  }
+  (members[orgId] || []).forEach(n => { var o = document.createElement('option'); o.value = n; o.textContent = n; sel.appendChild(o); });
+  
+  var found = orgs.find(o => o.id === orgId);
+  var lbl = document.getElementById('recOrgLabel');
+  if (lbl && found) { lbl.textContent = '目前機構：' + found.name.replace(/（.*?）/g, '').trim(); }
   renderRecordSelect();
 }
+
 function calcBMI(){
   var h=parseFloat(document.getElementById('height').value),w=parseFloat(document.getElementById('weight').value),el=document.getElementById('bmiDisplay');
   if(h>0&&w>0){var bmi=w/((h/100)*(h/100)),b=bmi.toFixed(1),cls='bmi-badge',label='正常';
@@ -531,6 +664,9 @@ document.addEventListener('click',function(e){if(!e.target.closest('.multiselect
 
 function doPrint(){updateAllPrintText();window.print();}
 
+// ==========================================
+// 機構管理 UI
+// ==========================================
 function openMgr(){mgrActiveOrg=orgs.length>0?orgs[0].id:null;renderMgr();document.getElementById('mgrOverlay').classList.add('show');}
 function closeMgr(){document.getElementById('mgrOverlay').classList.remove('show');}
 function overlayClick(e){if(e.target===document.getElementById('mgrOverlay'))closeMgr();}
@@ -546,7 +682,7 @@ function renderMgr(){
   orgs.forEach(function(o){
     var row=document.createElement('div');row.className='mgr-row';
     var inp=document.createElement('input');inp.type='text';inp.value=o.name;
-    inp.onchange=function(){o.name=this.value;renderOrgSelect();};
+    inp.onchange=function(){o.name=this.value;};
     var btn=document.createElement('button');btn.className='del-btn';btn.textContent='刪除';
     btn.onclick=function(){deleteOrg(o.id);};
     row.appendChild(inp);row.appendChild(btn);orgList.appendChild(row);
@@ -571,20 +707,20 @@ function renderMgr(){
     });
   }
 }
-function addOrg(){var input=document.getElementById('newOrgName'),name=input.value.trim();if(!name){alert('請輸入機構名稱');return;}var id='ORG_'+Date.now();orgs.push({id:id,name:name});members[id]=[];input.value='';mgrActiveOrg=id;renderOrgSelect();renderMgr();}
-function deleteOrg(id){if(!confirm('確定刪除此機構？'))return;orgs=orgs.filter(function(o){return o.id!==id;});delete members[id];mgrActiveOrg=orgs.length>0?orgs[0].id:null;renderOrgSelect();renderMgr();}
+function addOrg(){var input=document.getElementById('newOrgName'),name=input.value.trim();if(!name){alert('請輸入機構名稱');return;}var id='ORG_'+Date.now();orgs.push({id:id,name:name});members[id]=[];input.value='';mgrActiveOrg=id;renderMgr();}
+function deleteOrg(id){if(!confirm('確定刪除此機構？'))return;orgs=orgs.filter(function(o){return o.id!==id;});delete members[id];mgrActiveOrg=orgs.length>0?orgs[0].id:null;renderMgr();}
 function addMember(){var input=document.getElementById('newMemberName'),name=input.value.trim();if(!name)return;if(!mgrActiveOrg)return;if(!members[mgrActiveOrg])members[mgrActiveOrg]=[];members[mgrActiveOrg].push(name);input.value='';renderMgr();}
 function deleteMember(orgId,idx){members[orgId].splice(idx,1);renderMgr();}
 function batchAddMembers(){if(!mgrActiveOrg){alert('請先選擇機構');return;}var raw=document.getElementById('batchInput').value;var names=raw.split('\n').map(function(s){return s.trim();}).filter(function(s){return s.length>0;});if(names.length===0){alert('請輸入姓名');return;}if(!members[mgrActiveOrg])members[mgrActiveOrg]=[];names.forEach(function(n){members[mgrActiveOrg].push(n);});document.getElementById('batchInput').value='';document.getElementById('batchResult').textContent='已新增 '+names.length+' 位。';renderMgr();}
 function replaceMembers(){if(!mgrActiveOrg){alert('請先選擇機構');return;}var raw=document.getElementById('batchInput').value;var names=raw.split('\n').map(function(s){return s.trim();}).filter(function(s){return s.length>0;});if(names.length===0){alert('請輸入姓名');return;}if(!confirm('確定取代現有名單？'))return;members[mgrActiveOrg]=names;document.getElementById('batchInput').value='';document.getElementById('batchResult').textContent='已取代為 '+names.length+' 位。';renderMgr();}
+
 function saveMgr(){
+  saveCloudSettings(); // 將變更儲存到 Firebase 雲端
   var curOrgId=document.getElementById('orgSelect').value;
   var curName=document.getElementById('nameSelect').value;
   closeMgr();
   renderOrgSelect();
-  if(!curOrgId && mgrActiveOrg){
-    document.getElementById('orgSelect').value=mgrActiveOrg;
-  }
+  if(!curOrgId && mgrActiveOrg){ document.getElementById('orgSelect').value=mgrActiveOrg; }
   onOrgChange();
   if(curName){
     var ns=document.getElementById('nameSelect');
@@ -594,6 +730,9 @@ function saveMgr(){
   }
 }
 
+// ==========================================
+// 表單資料收集與套用
+// ==========================================
 function collectFormData(){
   var eat10Vals=[],chewVals=[];
   eat10Items.forEach(function(_,i){eat10Vals.push(parseInt(document.getElementById('e'+i).value));});
@@ -626,10 +765,8 @@ function collectFormData(){
     assessDate:document.getElementById('assessDate').value
   };
 }
-function exportJSON(){var data=collectFormData();var name=(data.name||'未命名')+'_評估表_'+(data.assessDate||new Date().toISOString().split('T')[0]);downloadJSON(data,name+'.json');}
-function importJSON(event){var file=event.target.files[0];if(!file)return;var reader=new FileReader();reader.onload=function(e){try{var data=JSON.parse(e.target.result);applyFormData(data);alert('匯入成功！');}catch(err){alert('JSON 格式錯誤。');}};reader.readAsText(file);event.target.value='';}
+
 function applyFormData(d){
-  renderOrgSelect();
   if(d.org){document.getElementById('orgSelect').value=d.org;onOrgChange();}
   setTimeout(function(){if(d.name)document.getElementById('nameSelect').value=d.name;},50);
   if(d.gender)document.getElementById('gender').value=d.gender;
@@ -663,8 +800,8 @@ function applyFormData(d){
     }
   });
 }
-function exportOrgJSON(){downloadJSON({orgs:orgs,members:members},'機構人員設定.json');}
-function importOrgJSON(event){var file=event.target.files[0];if(!file)return;var reader=new FileReader();reader.onload=function(e){try{var data=JSON.parse(e.target.result);if(!data.orgs||!data.members)throw new Error();if(!confirm('確定取代機構設定？'))return;orgs=data.orgs;members=data.members;mgrActiveOrg=orgs.length>0?orgs[0].id:null;renderOrgSelect();renderMgr();alert('匯入成功！');}catch(err){alert('格式錯誤。');}};reader.readAsText(file);event.target.value='';}
+
+function exportJSON(){var data=collectFormData();var name=(data.name||'未命名')+'_評估表_'+(data.assessDate||new Date().toISOString().split('T')[0]);downloadJSON(data,name+'.json');}
 function downloadJSON(data,filename){var blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename;document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(a.href);}
 
 function resetForm(){
@@ -679,12 +816,13 @@ function resetForm(){
   document.getElementById('teethOtherField').style.display='none';
   ['disease','eathabit','diet','overall'].forEach(function(key){msState[key].clear();buildMS('ms-'+key,key);updatePrintText(key);});
   document.getElementById('assessDate').value=new Date().toISOString().split('T')[0];
+  document.getElementById('recordSelect').innerHTML = '<option value="">── 選擇雲端儲存個案 ──</option>';
 }
 
-renderOrgSelect();
+// 初始設定
 ['disease','eathabit','diet','overall'].forEach(function(k){buildMS('ms-'+k,k);});
 document.getElementById('assessDate').value=new Date().toISOString().split('T')[0];
-renderRecordSelect();
+
 </script>
 </body>
 </html>
