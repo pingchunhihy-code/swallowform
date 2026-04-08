@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>飲食質地評估表</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:"Microsoft JhengHei","PingFang TC",sans-serif;color:#222;font-size:14px;background:#f5f5f2;padding:20px;}
+.form-wrap{max-width:900px;margin:0 auto;background:#fff;border-radius:12px;padding:1.5rem;box-shadow:0 1px 4px rgba(0,0,0,0.08);}
+.form-header{text-align:center;margin-bottom:1rem;padding-bottom:.8rem;border-bottom:2px solid #e0e0e0;position:relative;}
+.org-select{font-size:18px;font-weight:bold;background:transparent;border:none;border-bottom:2px solid #378ADD;color:#222;text-align:center;cursor:pointer;padding:4px 8px;max-width:480px;}
+.org-select:focus{outline:none;}
+.sub-title{font-size:13px;color:#666;margin-top:4px;}
+.mgr-btn{position:absolute;right:0;top:0;background:#fff;border:1px solid #d0d0c8;border-radius:6px;padding:5px 12px;font-size:12px;cursor:pointer;color:#555;}
+.mgr-btn:hover{background:#f0f0ec;border-color:#378ADD;color:#185FA5;}
+.section{background:#fff;border:1px solid #e0e0d8;border-radius:8px;padding:.75rem 1rem;margin-bottom:.6rem;}
+.section-title{font-size:14px;font-weight:bold;margin-bottom:10px;padding:7px 12px;background:#f0f0ec;border-left:4px solid #378ADD;border-radius:4px;color:#1a1a1a;}
+.field-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-bottom:8px;}
+.field{display:flex;flex-direction:column;gap:3px;}
+.field label{font-size:11px;color:#666;}
+input,select,textarea{font-size:13px;color:#222;background:#f8f8f6;border:1px solid #d0d0c8;border-radius:5px;padding:5px 8px;width:100%;}
+input:focus,select:focus,textarea:focus{outline:2px solid #378ADD;outline-offset:1px;background:#fff;}
+.bmi-badge{font-size:12px;font-weight:bold;padding:5px 8px;border-radius:5px;background:#E6F1FB;color:#185FA5;white-space:nowrap;min-height:30px;display:flex;align-items:center;}
+.bmi-warn{background:#FAEEDA;color:#854F0B;}
+.bmi-danger{background:#FCEBEB;color:#A32D2D;}
+table{width:100%;border-collapse:collapse;font-size:12px;}
+th{background:#f5f5f2;font-weight:bold;padding:6px;text-align:center;border:1px solid #e0e0d8;}
+td{padding:5px 7px;border:1px solid #e0e0d8;vertical-align:middle;}
+tr:hover td{background:#fafaf8;}
+.score-row td{background:#f0f0ec!important;font-weight:bold;}
+.score-badge{display:inline-block;padding:2px 10px;border-radius:10px;font-size:11px;font-weight:bold;}
+.score-ok{background:#E1F5EE;color:#085041;}
+.score-warn{background:#FAEEDA;color:#633806;}
+.multiselect-wrap{position:relative;width:100%;}
+.ms-trigger{display:flex;align-items:center;justify-content:space-between;background:#f8f8f6;border:1px solid #d0d0c8;border-radius:5px;padding:5px 8px;cursor:pointer;min-height:32px;user-select:none;}
+.ms-trigger:hover,.ms-trigger.open{border-color:#378ADD;background:#fff;}
+.ms-trigger.open{outline:2px solid #378ADD;outline-offset:1px;}
+.ms-trigger-text{font-size:12px;color:#888;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.ms-trigger-text.has{color:#222;}
+.ms-arrow{font-size:9px;color:#999;margin-left:6px;transition:transform .15s;}
+.ms-arrow.open{transform:rotate(180deg);}
+.ms-dd{display:none;position:absolute;top:calc(100% + 3px);left:0;right:0;background:#fff;border:1px solid #d0d0c8;border-radius:7px;box-shadow:0 4px 16px rgba(0,0,0,.12);z-index:999;max-height:240px;overflow-y:auto;}
+.ms-dd.open{display:block;}
+.ms-opt{display:flex;align-items:flex-start;gap:7px;padding:7px 10px;cursor:pointer;border-bottom:.5px solid #f0f0ec;}
+.ms-opt:last-child{border-bottom:none;}
+.ms-opt:hover{background:#f5f5f2;}
+.ms-opt.sel{background:#E6F1FB;}
+.ms-opt input{width:14px;height:14px;flex-shrink:0;margin-top:2px;}
+.ms-opt label{font-size:12px;cursor:pointer;line-height:1.5;}
+.ms-add-row{display:flex;gap:6px;padding:7px 10px;border-top:1px solid #e8e8e8;background:#fafaf8;position:sticky;bottom:0;}
+.ms-add-row input{flex:1;font-size:12px;padding:4px 7px;}
+.ms-add-btn{background:#E6F1FB;border:1px solid #85B7EB;color:#185FA5;border-radius:5px;padding:4px 10px;font-size:11px;cursor:pointer;white-space:nowrap;}
+.ms-add-btn:hover{background:#B5D4F4;}
+.ms-tags{display:flex;flex-wrap:wrap;gap:3px;margin-top:5px;}
+.tag{display:inline-flex;align-items:center;gap:3px;background:#E6F1FB;color:#185FA5;font-size:11px;padding:2px 7px;border-radius:9px;}
+.tag-x{cursor:pointer;font-size:13px;color:#378ADD;}
+.tag-x:hover{color:#A32D2D;}
+.records-bar{display:flex;align-items:center;gap:8px;margin-bottom:.7rem;background:#f0f4fb;border:1px solid #c8d8f0;border-radius:8px;padding:8px 12px;}
+.records-bar label{font-size:12px;color:#555;white-space:nowrap;}
+.records-bar select{flex:1;font-size:13px;max-width:260px;}
+.rec-btn{background:#fff;border:1px solid #85B7EB;color:#185FA5;border-radius:5px;padding:5px 12px;font-size:12px;cursor:pointer;white-space:nowrap;}
+.rec-btn:hover{background:#E6F1FB;}
+.rec-btn.danger{border-color:#F09595;color:#A32D2D;}
+.rec-btn.danger:hover{background:#FCEBEB;}
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:2000;}
+.overlay.show{display:flex;align-items:center;justify-content:center;}
+.modal{background:#fff;border-radius:12px;padding:1.5rem;width:650px;max-width:95vw;max-height:88vh;overflow-y:auto;}
+.modal-title{font-size:15px;font-weight:bold;margin-bottom:1rem;padding-bottom:8px;border-bottom:1px solid #e8e8e8;display:flex;justify-content:space-between;align-items:center;}
+.modal-close{cursor:pointer;font-size:22px;color:#999;line-height:1;}
+.modal-close:hover{color:#222;}
+.mgr-sec{margin-bottom:1.2rem;}
+.mgr-sec-title{font-size:13px;font-weight:bold;color:#555;margin-bottom:8px;}
+.mgr-row{display:flex;gap:8px;margin-bottom:6px;align-items:center;}
+.mgr-row input{flex:1;font-size:13px;padding:5px 8px;}
+.del-btn{background:#FCEBEB;border:1px solid #F09595;color:#A32D2D;border-radius:5px;padding:4px 10px;font-size:12px;cursor:pointer;white-space:nowrap;flex-shrink:0;}
+.del-btn:hover{background:#F7C1C1;}
+.add-btn{background:#E6F1FB;border:1px solid #85B7EB;color:#185FA5;border-radius:5px;padding:5px 14px;font-size:12px;cursor:pointer;white-space:nowrap;}
+.add-btn:hover{background:#B5D4F4;}
+.org-tab-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;}
+.org-tab{padding:4px 12px;border:1px solid #d0d0c8;border-radius:5px;cursor:pointer;font-size:12px;background:#f8f8f6;}
+.org-tab.active{background:#185FA5;color:#fff;border-color:#185FA5;}
+.tab-btns{display:flex;gap:0;margin-bottom:10px;border:1px solid #d0d0c8;border-radius:6px;overflow:hidden;}
+.tab-btn{flex:1;padding:6px;font-size:12px;background:#f8f8f6;border:none;cursor:pointer;border-right:1px solid #d0d0c8;}
+.tab-btn:last-child{border-right:none;}
+.tab-btn.active{background:#185FA5;color:#fff;}
+.member-panel{display:none;}
+.member-panel.active{display:block;}
+.batch-area{width:100%;min-height:80px;font-size:13px;border:1px solid #d0d0c8;border-radius:5px;padding:7px 10px;resize:vertical;background:#fafaf8;}
+.save-btn{background:#185FA5;color:#fff;border:none;border-radius:7px;padding:8px 28px;font-size:13px;font-weight:bold;cursor:pointer;}
+.save-btn:hover{background:#0C447C;}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:1rem;}
+.print-btn{background:#185FA5;color:#fff;border:none;border-radius:7px;padding:9px 24px;font-size:13px;font-weight:bold;cursor:pointer;}
+.print-btn:hover{background:#0C447C;}
+.json-btn{background:#fff;color:#185FA5;border:1px solid #85B7EB;border-radius:7px;padding:9px 18px;font-size:13px;font-weight:bold;cursor:pointer;}
+.json-btn:hover{background:#E6F1FB;}
+.reset-btn{background:#fff;color:#888;border:1px solid #ccc;border-radius:7px;padding:9px 18px;font-size:13px;cursor:pointer;margin-left:auto;}
+.reset-btn:hover{background:#f5f5f5;}
+.print-disease{display:none;}
+
+@media print{
+  @page{size:A4;margin:10mm 14mm;}
+  body{background:#fff;padding:0;font-size:13px;}
+  .form-wrap{box-shadow:none;padding:0;border-radius:0;max-width:100%;}
+  .form-header{padding-bottom:5px;margin-bottom:6px;}
+  .form-header .sub-title{font-size:13px;}
+  .org-select{font-size:16px;}
+  .mgr-btn,.btn-row,.overlay,.records-bar{display:none!important;}
+  .section{padding:.5rem .8rem;margin-bottom:.45rem;border-radius:4px;page-break-inside:avoid;}
+  .section-title{font-size:14px;margin-bottom:6px;padding:5px 10px;background:#f0f0ec;border-left:4px solid #378ADD;border-radius:3px;}
+  .field label{font-size:11px;}
+  input,select{font-size:13px;padding:3px 6px;background:#fff;border-color:#ccc;}
+  .bmi-badge{font-size:13px;padding:3px 6px;min-height:24px;}
+  table{font-size:13px;}
+  th{font-size:13px;padding:4px 6px;}
+  td{font-size:13px;padding:4px 6px;}
+  .ms-trigger{font-size:13px;padding:3px 6px;min-height:26px;display:none;}
+  .ms-dd{display:none!important;}
+  .ms-tags{display:none!important;}
+  .print-disease{display:block;font-size:13px;color:#222;padding:4px 0;line-height:1.6;}
+  .tag{font-size:12px;padding:1px 6px;}
+  .score-badge{font-size:12px;padding:2px 8px;}
+  textarea{font-size:13px;padding:3px 6px;border-color:#ccc;background:#fff;}
+  .page-break{page-break-before:always;}
+  .field-row{gap:6px;margin-bottom:6px;}
+}
+</style>
+</head>
+<body>
+<div class="form-wrap">
+
+<div class="form-header">
+  <select class="org-select" id="orgSelect" onchange="onOrgChange()">
+    <option value="">── 請選擇機構 ──</option>
+  </select>
+  <div class="sub-title">飲食質地評估表</div>
+  <button class="mgr-btn" onclick="openMgr()">⚙ 管理機構與人員</button>
+</div>
+
+<div class="records-bar">
+  <div style="display:flex;flex-direction:column;gap:5px;width:100%;">
+    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+      <span style="font-size:12px;color:#333;white-space:nowrap;font-weight:bold;">📁 個案存檔</span>
+      <span id="recOrgLabel" style="font-size:11px;color:#185FA5;background:#ddeeff;border-radius:4px;padding:2px 8px;white-space:nowrap;">請先選擇機構</span>
+      <button class="rec-btn" onclick="saveRecord()" style="margin-left:auto;">💾 儲存目前個案</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+      <select id="recordSelect" style="flex:1;min-width:180px;max-width:360px;font-size:13px;"><option value="">── 選擇已儲存個案 ──</option></select>
+      <button class="rec-btn" onclick="loadRecord()">↑ 載入</button>
+      <button class="rec-btn danger" onclick="deleteRecord()">✕ 刪除</button>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">一、基本資料</div>
+  <div class="field-row">
+    <div class="field"><label>姓名</label><select id="nameSelect"><option value="">── 請先選擇機構 ──</option></select></div>
+    <div class="field"><label>性別</label><select id="gender"><option>男</option><option>女</option></select></div>
+    <div class="field"><label>年齡</label><input type="number" id="age" placeholder="歲" min="0" max="120"></div>
+  </div>
+  <div class="field-row" style="margin-bottom:4px;">
+    <div class="field" style="grid-column:1/-1;">
+      <label>疾病史（可複選）</label>
+      <div id="ms-disease" class="multiselect-wrap"></div>
+      <div class="print-disease" id="print-disease"></div>
+    </div>
+  </div>
+  <div class="field-row" style="align-items:flex-end;">
+    <div class="field"><label>身高 (cm)</label><input type="number" id="height" placeholder="cm" oninput="calcBMI()"></div>
+    <div class="field"><label>體重 (kg)</label><input type="number" id="weight" placeholder="kg" oninput="calcBMI()"></div>
+    <div class="field"><label>BMI（自動計算）</label><div id="bmiDisplay" class="bmi-badge">—</div></div>
+  </div>
+  <div class="field-row">
+    <div class="field"><label>視覺</label><select id="vision"><option value="">請選擇</option><option>正常</option><option>尚可</option><option>不佳</option></select></div>
+    <div class="field"><label>聽覺</label><select id="hearing"><option value="">請選擇</option><option>正常</option><option>尚可</option><option>不佳</option></select></div>
+    <div class="field"><label>認知功能</label><select id="cognition"><option value="">請選擇</option><option>正常</option><option>尚可</option><option>不佳</option></select></div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">二、口腔功能與吞嚥能力篩檢</div>
+  
+  <div class="field-row" style="margin-bottom:12px; background:#fafaf8; padding:8px; border:1px solid #e0e0d8; border-radius:5px;">
+    <div class="field">
+      <label>鼓頰評估</label>
+      <select id="cheekPuff">
+        <option value="">請選擇</option>
+        <option>雙側正常</option>
+        <option>單側正常</option>
+        <option>無法</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>舌頭靈活度</label>
+      <select id="tongueFlex">
+        <option value="">請選擇</option>
+        <option>正常 (上下左右移動自如)</option>
+        <option>部分受限 (活動範圍小或偏斜)</option>
+        <option>無法動作 (無法自主伸出)</option>
+      </select>
+    </div>
+  </div>
+
+  <p style="font-size:12px;color:#666;margin-bottom:6px;">【EAT-10 吞嚥篩檢】0＝沒有　1＝很少　2＝偶爾　3＝經常　4＝總是　（總分 ≥ 3 分即可能有吞嚥障礙風險）</p>
+  <table>
+    <thead><tr><th style="width:72%;text-align:left;padding-left:10px;">項目</th><th>得分</th></tr></thead>
+    <tbody id="eat10Body"></tbody>
+    <tfoot><tr class="score-row"><td style="text-align:right;padding-right:14px;">總分</td><td style="text-align:center;font-size:14px;"><span id="eat10Total">0</span></td></tr></tfoot>
+  </table>
+  <div style="margin-top:5px;"><span id="eat10Status" class="score-badge score-ok">正常範圍</span></div>
+</div>
+
+<div class="page-break"></div>
+
+<div class="section">
+  <div class="section-title">三、咀嚼能力篩檢表</div>
+  <div class="field-row" style="margin-bottom:7px;">
+    <div class="field"><label>牙齒功能</label>
+      <select id="teethFunc" onchange="checkOtherTeeth()"><option value="">請選擇</option><option>完整</option><option>缺牙</option><option>無牙</option><option>假牙</option><option>部份缺牙</option><option>其他</option></select>
+    </div>
+    <div class="field" id="teethOtherField" style="display:none;"><label>其他說明</label><input type="text" id="teethOther" placeholder="請輸入"></div>
+  </div>
+  <p style="font-size:12px;color:#666;margin-bottom:6px;">（≥ 4 種「有些吃力」或「沒辦法吃」即可能有咀嚼障礙風險）</p>
+  <table>
+    <thead><tr><th style="width:72%;text-align:left;padding-left:10px;">食物</th><th>評估</th></tr></thead>
+    <tbody id="chewBody"></tbody>
+    <tfoot><tr class="score-row"><td style="text-align:right;padding-right:14px;">困難次數</td><td style="text-align:center;font-size:14px;"><span id="chewTotal">0</span></td></tr></tfoot>
+  </table>
+  <div style="margin-top:5px;"><span id="chewStatus" class="score-badge score-ok">正常範圍</span></div>
+</div>
+
+<div class="section">
+  <div class="section-title">四、生活習慣調查</div>
+  <div class="field-row">
+    <div class="field"><label>飲食質地</label>
+      <select id="dietHabit"><option value="">請選擇</option><option>軟質</option><option>細碎乾飯</option><option>細碎稀飯</option><option>半流質</option><option>細泥飲食</option><option>素食乾飯</option><option>素食稀飯</option></select>
+    </div>
+    <div class="field"><label>平均用餐時間</label>
+      <select id="mealTime"><option value="">請選擇</option><option>15分鐘以內</option><option>15–30分鐘</option><option>30分鐘以上</option></select>
+    </div>
+  </div>
+  <div class="field-row" style="margin-bottom:0;">
+    <div class="field" style="grid-column:1/-1;">
+      <label>飲食習慣（可複選）</label>
+      <div id="ms-eathabit" class="multiselect-wrap"></div>
+      <div class="print-disease" id="print-eathabit"></div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">五、評估結果</div>
+  <div style="display:grid;grid-template-columns:90px 1fr;gap:0;border:1px solid #e0e0d8;border-radius:6px;overflow:visible;">
+    <div style="background:#f5f5f2;display:flex;align-items:center;justify-content:flex-end;padding:7px 12px;font-size:13px;font-weight:bold;border-bottom:1px solid #e8e8e8;">飲食建議</div>
+    <div style="padding:7px 10px;border-bottom:1px solid #e8e8e8;">
+      <div id="ms-diet" class="multiselect-wrap"></div>
+      <div class="print-disease" id="print-diet"></div>
+    </div>
+    <div style="background:#f5f5f2;display:flex;align-items:center;justify-content:flex-end;padding:7px 12px;font-size:13px;font-weight:bold;border-bottom:1px solid #e8e8e8;">綜合評估</div>
+    <div style="padding:7px 10px;border-bottom:1px solid #e8e8e8;">
+      <div id="ms-overall" class="multiselect-wrap"></div>
+      <div class="print-disease" id="print-overall"></div>
+    </div>
+    <div style="background:#f5f5f2;display:flex;align-items:flex-start;justify-content:flex-end;padding:7px 12px 0;font-size:13px;font-weight:bold;border-bottom:1px solid #e8e8e8;padding-top:9px;">說明</div>
+    <div style="padding:7px 10px;border-bottom:1px solid #e8e8e8;">
+      <textarea id="noteText" rows="3" placeholder="請輸入備註說明…" style="resize:vertical;width:100%;font-size:13px;"></textarea>
+    </div>
+    <div style="background:#f5f5f2;display:flex;align-items:center;justify-content:flex-end;padding:7px 12px;font-size:13px;font-weight:bold;">簽名／日期</div>
+    <div style="padding:7px 10px;display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <input type="text" id="signature" placeholder="評估人員簽名">
+      <input type="date" id="assessDate">
+    </div>
+  </div>
+</div>
+
+<div class="btn-row">
+  <button class="print-btn" onclick="doPrint()">列印 / 匯出 PDF</button>
+  <button class="json-btn" onclick="exportJSON()">↓ 匯出 JSON</button>
+  <button class="json-btn" onclick="document.getElementById('jsonImport').click()">↑ 匯入 JSON</button>
+  <input type="file" id="jsonImport" accept=".json" style="display:none;" onchange="importJSON(event)">
+  <button class="reset-btn" onclick="resetForm()">清除重填</button>
+</div>
+</div>
+
+<div class="overlay" id="mgrOverlay" onclick="overlayClick(event)">
+  <div class="modal">
+    <div class="modal-title">
+      <span>⚙ 管理機構與人員</span>
+      <span class="modal-close" onclick="closeMgr()">×</span>
+    </div>
+    <div class="mgr-sec">
+      <div class="mgr-sec-title">機構列表</div>
+      <div id="orgList"></div>
+      <div class="mgr-row" style="margin-top:8px;">
+        <input type="text" id="newOrgName" placeholder="輸入新機構名稱">
+        <button class="add-btn" onclick="addOrg()">+ 新增機構</button>
+      </div>
+    </div>
+    <div class="mgr-sec">
+      <div class="mgr-sec-title">人員名單管理</div>
+      <div class="org-tab-row" id="orgTabs"></div>
+      <div class="tab-btns">
+        <button class="tab-btn active" id="tabSingle" onclick="switchMemberTab('single')">逐筆新增</button>
+        <button class="tab-btn" id="tabBatch" onclick="switchMemberTab('batch')">批次輸入</button>
+      </div>
+      <div class="member-panel active" id="panelSingle">
+        <div id="memberList"></div>
+        <div class="mgr-row" style="margin-top:6px;">
+          <input type="text" id="newMemberName" placeholder="輸入姓名">
+          <button class="add-btn" onclick="addMember()">+ 新增</button>
+        </div>
+      </div>
+      <div class="member-panel" id="panelBatch">
+        <p style="font-size:12px;color:#666;margin-bottom:6px;">每行一個姓名</p>
+        <textarea class="batch-area" id="batchInput" placeholder="王小明&#10;李美華&#10;張志豪"></textarea>
+        <div style="display:flex;gap:8px;margin-top:7px;align-items:center;">
+          <button class="add-btn" onclick="batchAddMembers()">批次新增</button>
+          <button class="del-btn" style="background:#fff;border-color:#ccc;color:#666;" onclick="replaceMembers()">取代現有名單</button>
+        </div>
+        <div style="font-size:11px;color:#888;margin-top:5px;" id="batchResult"></div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="save-btn" onclick="saveMgr()">儲存並關閉</button>
+      <button class="json-btn" style="padding:7px 16px;font-size:12px;" onclick="exportOrgJSON()">↓ 匯出機構設定</button>
+      <button class="json-btn" style="padding:7px 16px;font-size:12px;" onclick="document.getElementById('orgImport').click()">↑ 匯入機構設定</button>
+      <input type="file" id="orgImport" accept=".json" style="display:none;" onchange="importOrgJSON(event)">
+    </div>
+  </div>
+</div>
+
+<script>
+var orgs=[{id:'A',name:'大愛社區式長照機構（A單位）'},{id:'B',name:'慈心居家護理所（B單位）'},{id:'C',name:'安心日照中心（C單位）'}];
+var members={A:['陳昭雄','林美惠','王志明','黃淑芬','李建國','張麗珍'],B:['吳明哲','劉淑華','蔡宗翰','許雅婷','鄭文傑'],C:['簡世豪','游淑玲','彭志偉','洪雅文','賴建宏','葉秋月']};
+var mgrActiveOrg='A';
+var STORE_KEY='dietary_records_v2';
+
+function getRecords(){try{return JSON.parse(localStorage.getItem(STORE_KEY)||'{}');}catch(e){return {};}}
+function saveRecords(r){try{localStorage.setItem(STORE_KEY,JSON.stringify(r));}catch(e){alert('儲存空間不足，無法儲存。');}}
+
+function currentOrgId(){return document.getElementById('orgSelect').value||'__none__';}
+function currentOrgName(){
+  var id=document.getElementById('orgSelect').value;
+  var found=orgs.find(function(o){return o.id===id;});
+  return found?found.name:'（未選擇機構）';
+}
+
+function renderRecordSelect(){
+  var sel=document.getElementById('recordSelect');
+  var cur=sel.value;
+  sel.innerHTML='<option value="">── 選擇已儲存個案 ──</option>';
+  var r=getRecords();
+  var orgId=currentOrgId();
+  var orgData=r[orgId]||{};
+  var keys=Object.keys(orgData).sort();
+  if(keys.length===0){
+    var opt=document.createElement('option');opt.disabled=true;opt.textContent='（此機構尚無儲存個案）';sel.appendChild(opt);
+  } else {
+    keys.forEach(function(k){
+      var opt=document.createElement('option');opt.value=k;opt.textContent=k;sel.appendChild(opt);
+    });
+  }
+  if(cur)sel.value=cur;
+}
+
+function saveRecord(){
+  var data=collectFormData();
+  var name=data.name;
+  if(!name){alert('請先選擇姓名再儲存');return;}
+  var orgId=currentOrgId();
+  var key=name+'（'+(data.assessDate||'無日期')+'）';
+  var r=getRecords();
+  if(!r[orgId])r[orgId]={};
+  r[orgId][key]=data;
+  saveRecords(r);
+  renderRecordSelect();
+  document.getElementById('recordSelect').value=key;
+  alert('已儲存：【'+currentOrgName()+'】'+key);
+}
+
+function loadRecord(){
+  var key=document.getElementById('recordSelect').value;
+  if(!key){alert('請先選擇個案');return;}
+  var r=getRecords();
+  var orgId=currentOrgId();
+  var orgData=r[orgId]||{};
+  if(!orgData[key]){alert('找不到此個案');return;}
+  applyFormData(orgData[key]);
+}
+
+function deleteRecord(){
+  var key=document.getElementById('recordSelect').value;
+  if(!key){alert('請先選擇個案');return;}
+  if(!confirm('確定刪除「'+key+'」？'))return;
+  var r=getRecords();
+  var orgId=currentOrgId();
+  if(r[orgId])delete r[orgId][key];
+  saveRecords(r);
+  renderRecordSelect();
+}
+
+function renderOrgSelect(){
+  var sel=document.getElementById('orgSelect'),cur=sel.value;
+  sel.innerHTML='<option value="">── 請選擇機構 ──</option>';
+  orgs.forEach(function(o){var opt=document.createElement('option');opt.value=o.id;opt.textContent=o.name;sel.appendChild(opt);});
+  if(cur)sel.value=cur;
+}
+function onOrgChange(){
+  var orgId=document.getElementById('orgSelect').value,sel=document.getElementById('nameSelect');
+  sel.innerHTML='<option value="">── 請選擇姓名 ──</option>';
+  if(!orgId){
+    var lbl=document.getElementById('recOrgLabel');if(lbl){lbl.textContent='請先選擇機構';}
+    document.getElementById('recordSelect').innerHTML='<option value="">── 選擇已儲存個案 ──</option>';
+    return;
+  }
+  (members[orgId]||[]).forEach(function(n){var o=document.createElement('option');o.value=n;o.textContent=n;sel.appendChild(o);});
+  var found=orgs.find(function(o){return o.id===orgId;});
+  var lbl=document.getElementById('recOrgLabel');
+  if(lbl&&found){lbl.textContent='目前機構：'+found.name.replace(/（.*?）/g,'').trim();}
+  renderRecordSelect();
+}
+function calcBMI(){
+  var h=parseFloat(document.getElementById('height').value),w=parseFloat(document.getElementById('weight').value),el=document.getElementById('bmiDisplay');
+  if(h>0&&w>0){var bmi=w/((h/100)*(h/100)),b=bmi.toFixed(1),cls='bmi-badge',label='正常';
+    if(bmi<18.5){cls='bmi-badge bmi-warn';label='體重過輕';}
+    else if(bmi>=27){cls='bmi-badge bmi-danger';label='體重過重';}
+    else if(bmi>=24){cls='bmi-badge bmi-warn';label='過重';}
+    el.textContent=b+'（'+label+'）';el.className=cls;
+  }else{el.textContent='—';el.className='bmi-badge';}
+}
+
+var eat10Items=['吞嚥問題讓我的體重減輕','因為吞嚥問題不能在外面用餐','我喝飲料／水很費力','我吃固體食物很費力','我吞藥丸很費力','吞嚥會感覺到痛','因為吞嚥問題不能享受用餐','吞嚥後感覺喉嚨有食物卡著','當我進食的時候會咳嗽','吞嚥讓我感覺緊張有壓力'];
+(function(){var tbody=document.getElementById('eat10Body');eat10Items.forEach(function(item,i){var tr=document.createElement('tr');tr.innerHTML='<td style="padding-left:10px;">'+item+'</td><td style="text-align:center;"><select id="e'+i+'" onchange="updateEat10()" style="width:100px;"><option value="0">0 沒有</option><option value="1">1 很少</option><option value="2">2 偶爾</option><option value="3">3 經常</option><option value="4">4 總是</option></select></td>';tbody.appendChild(tr);});})();
+function updateEat10(){var t=0;eat10Items.forEach(function(_,i){t+=parseInt(document.getElementById('e'+i).value);});document.getElementById('eat10Total').textContent=t;var s=document.getElementById('eat10Status');if(t>=3){s.textContent='注意：可能有吞嚥障礙風險（總分 '+t+' 分）';s.className='score-badge score-warn';}else{s.textContent='正常範圍（總分 '+t+' 分）';s.className='score-badge score-ok';}}
+
+var chewItems=['硬豆干','炒花生','芭樂（整顆）','炸雞','水煮玉米（整枝）','蘋果／梨子／蓮霧／芭樂（切片）','烤魷魚／雞胗','水煮花枝／滷豬耳朵','柳丁（切片）','竹筍／敏豆／花椰菜／切片小黃瓜','煮熟的紅／白蘿蔔'];
+(function(){var tbody=document.getElementById('chewBody');chewItems.forEach(function(item,i){var tr=document.createElement('tr');tr.innerHTML='<td style="padding-left:10px;">'+item+'</td><td style="text-align:center;"><select id="c'+i+'" onchange="updateChew()" style="width:108px;"><option value="0">容易吃</option><option value="1">有些吃力</option><option value="1">沒辦法吃</option></select></td>';tbody.appendChild(tr);});})();
+function updateChew(){var t=0;chewItems.forEach(function(_,i){if(parseInt(document.getElementById('c'+i).value)>0)t++;});document.getElementById('chewTotal').textContent=t;var s=document.getElementById('chewStatus');if(t>=4){s.textContent='注意：可能有咀嚼障礙風險（'+t+' 種困難）';s.className='score-badge score-warn';}else{s.textContent='正常範圍（'+t+' 種困難）';s.className='score-badge score-ok';}}
+function checkOtherTeeth(){document.getElementById('teethOtherField').style.display=document.getElementById('teethFunc').value==='其他'?'':'none';}
+
+var msOptions={
+  disease:['糖尿病','高血壓','高血脂','心臟病','中風','慢性腎臟病（CKD）','失智症','骨質疏鬆','帕金森氏症','慢性阻塞性肺病（COPD）','癌症','貧血','肝硬化','憂鬱症'],
+  eathabit:['湯多','菜多','飯多','淋肉湯','海鮮過敏','素食','無'],
+  diet:['牙齒完整或部分功能，舌頭功能正常，建議軟質飲食（避免太硬、菜梗切小段）。','牙齒缺牙或無牙但舌頭正常或尚可，建議細碎飲食（大小約1.5cm丁狀）。','牙齒缺牙或無牙但舌頭正常或尚可，建議細碎（稀飯）飲食（大小約1.5cm丁狀）。','無牙、咀嚼困難但舌頭功能尚可，建議半流質飲食（鹹粥狀）。','對細碎食物有嗆咳或異物感／含水量高食物有嗆咳，建議細泥飲食。'],
+  overall:['依飲食質地建議給予，持續定期追蹤。','鼓勵持續參與中心活動以維持肌力與活動量。','建議每日飲水目標設定為1500–2000cc，並鼓勵參與活動後補充水分。','體重過重：BMI指數偏高，建議增加日間活動量，宜控制澱粉與精製糖攝取量。','體重過輕／肌少症風險，建議採高蛋白高熱量飲食原則，正餐之間增加豆漿或營養品作為點心。','食慾不佳：建議採少量多餐方式，並鼓勵長輩自主進食以增加成就感。','中風／喝水易嗆：建議使用食物增稠劑將液體調整至適合稠度，並採收下巴姿勢進食。','進食速度過快：已衛教使用小湯匙進食，並提醒每口充分咀嚼吞嚥後再進食下一口。','建議改用斜口杯或單向吸管控制流速，避免過多水量。','每日持續執行餐前健口操，加強舌部靈活度與咽喉肌群力量，降低誤嚥風險。']
+};
+var msState={disease:new Set(),eathabit:new Set(),diet:new Set(),overall:new Set()};
+var msPh={disease:'請選擇疾病史…',eathabit:'請選擇飲食習慣…',diet:'請選擇飲食建議項目…',overall:'請選擇綜合評估項目…'};
+var msAddable={disease:true,eathabit:true,overall:true};
+var msPrintId={disease:'print-disease',eathabit:'print-eathabit',diet:'print-diet',overall:'print-overall'};
+
+function buildMS(cid,key){
+  var wrap=document.getElementById(cid);if(!wrap)return;
+  wrap.innerHTML='';
+  var trigger=document.createElement('div');trigger.className='ms-trigger';trigger.id='mst-'+key;
+  trigger.innerHTML='<span class="ms-trigger-text" id="mstt-'+key+'">'+msPh[key]+'</span><span class="ms-arrow" id="msa-'+key+'">▼</span>';
+  trigger.onclick=function(){toggleMS(key);};
+  var dd=document.createElement('div');dd.className='ms-dd';dd.id='msdd-'+key;
+  rebuildDDItems(dd,key);
+  if(msAddable[key]){
+    var addRow=document.createElement('div');addRow.className='ms-add-row';
+    addRow.innerHTML='<input type="text" id="msadd-'+key+'" placeholder="新增選項…"><button class="ms-add-btn" onclick="addMSOption(\''+key+'\')">新增</button>';
+    dd.appendChild(addRow);
+  }
+  wrap.appendChild(trigger);wrap.appendChild(dd);
+  var tagsDiv=document.createElement('div');tagsDiv.className='ms-tags';tagsDiv.id='mstags-'+key;wrap.appendChild(tagsDiv);
+}
+function rebuildDDItems(dd,key){
+  var existingAdd=dd.querySelector('.ms-add-row');
+  dd.querySelectorAll('.ms-opt').forEach(function(el){el.remove();});
+  msOptions[key].forEach(function(opt,i){
+    var item=document.createElement('div');item.className='ms-opt'+(msState[key].has(i)?' sel':'');item.id='mso-'+key+'-'+i;
+    var cb='<input type="checkbox" id="mscb-'+key+'-'+i+'"'+(msState[key].has(i)?' checked':'')+' onchange="toggleMSOpt(\''+key+'\','+i+',this.checked)">';
+    item.innerHTML=cb+'<label for="mscb-'+key+'-'+i+'">'+opt+'</label>';
+    if(msAddable[key]&&existingAdd){dd.insertBefore(item,existingAdd);}else{dd.appendChild(item);}
+  });
+}
+function toggleMSOpt(key,i,checked){
+  if(checked)msState[key].add(i);else msState[key].delete(i);
+  var item=document.getElementById('mso-'+key+'-'+i);if(item)item.classList.toggle('sel',checked);
+  updateMSTrigger(key);renderTags(key);updatePrintText(key);
+}
+function addMSOption(key){
+  var inp=document.getElementById('msadd-'+key);
+  var val=inp.value.trim();if(!val)return;
+  msOptions[key].push(val);
+  var i=msOptions[key].length-1;
+  msState[key].add(i);
+  var dd=document.getElementById('msdd-'+key);rebuildDDItems(dd,key);
+  updateMSTrigger(key);renderTags(key);updatePrintText(key);
+  inp.value='';
+}
+function toggleMS(key){
+  var dd=document.getElementById('msdd-'+key),tr=document.getElementById('mst-'+key),ar=document.getElementById('msa-'+key);
+  var isOpen=dd.classList.contains('open');
+  document.querySelectorAll('.ms-dd.open,.ms-trigger.open,.ms-arrow.open').forEach(function(el){el.classList.remove('open');});
+  if(!isOpen){dd.classList.add('open');tr.classList.add('open');ar.classList.add('open');}
+}
+function updateMSTrigger(key){
+  var el=document.getElementById('mstt-'+key);if(!el)return;
+  if(msState[key].size===0){el.textContent=msPh[key];el.className='ms-trigger-text';}
+  else{el.textContent=msState[key].size+' 項已選';el.className='ms-trigger-text has';}
+}
+function renderTags(key){
+  var d=document.getElementById('mstags-'+key);if(!d)return;d.innerHTML='';
+  msState[key].forEach(function(i){
+    if(i>=msOptions[key].length)return;
+    var tag=document.createElement('span');tag.className='tag';
+    var s=msOptions[key][i];var sh=s.length>28?s.substring(0,28)+'…':s;
+    tag.innerHTML=sh+'<span class="tag-x" onclick="removeTag(\''+key+'\','+i+')">×</span>';d.appendChild(tag);
+  });
+}
+function removeTag(key,i){
+  msState[key].delete(i);
+  var cb=document.getElementById('mscb-'+key+'-'+i);
+  if(cb){cb.checked=false;var opt=document.getElementById('mso-'+key+'-'+i);if(opt)opt.classList.remove('sel');}
+  updateMSTrigger(key);renderTags(key);updatePrintText(key);
+}
+function updatePrintText(key){
+  var pid=msPrintId[key];if(!pid)return;
+  var el=document.getElementById(pid);if(!el)return;
+  var selected=[];
+  msState[key].forEach(function(i){if(i<msOptions[key].length)selected.push(msOptions[key][i]);});
+  el.textContent=selected.length>0?selected.join('、'):'（未填寫）';
+}
+function updateAllPrintText(){
+  ['disease','eathabit','diet','overall'].forEach(function(k){updatePrintText(k);});
+}
+document.addEventListener('click',function(e){if(!e.target.closest('.multiselect-wrap')){document.querySelectorAll('.ms-dd.open,.ms-trigger.open,.ms-arrow.open').forEach(function(el){el.classList.remove('open');});}});
+
+function doPrint(){updateAllPrintText();window.print();}
+
+function openMgr(){mgrActiveOrg=orgs.length>0?orgs[0].id:null;renderMgr();document.getElementById('mgrOverlay').classList.add('show');}
+function closeMgr(){document.getElementById('mgrOverlay').classList.remove('show');}
+function overlayClick(e){if(e.target===document.getElementById('mgrOverlay'))closeMgr();}
+function switchMemberTab(tab){
+  document.getElementById('tabSingle').classList.toggle('active',tab==='single');
+  document.getElementById('tabBatch').classList.toggle('active',tab==='batch');
+  document.getElementById('panelSingle').classList.toggle('active',tab==='single');
+  document.getElementById('panelBatch').classList.toggle('active',tab==='batch');
+  document.getElementById('batchResult').textContent='';
+}
+function renderMgr(){
+  var orgList=document.getElementById('orgList');orgList.innerHTML='';
+  orgs.forEach(function(o){
+    var row=document.createElement('div');row.className='mgr-row';
+    var inp=document.createElement('input');inp.type='text';inp.value=o.name;
+    inp.onchange=function(){o.name=this.value;renderOrgSelect();};
+    var btn=document.createElement('button');btn.className='del-btn';btn.textContent='刪除';
+    btn.onclick=function(){deleteOrg(o.id);};
+    row.appendChild(inp);row.appendChild(btn);orgList.appendChild(row);
+  });
+  var tabs=document.getElementById('orgTabs');tabs.innerHTML='';
+  orgs.forEach(function(o){
+    var tab=document.createElement('div');tab.className='org-tab'+(o.id===mgrActiveOrg?' active':'');
+    tab.textContent=o.name.replace(/（.*?）/g,'');
+    tab.onclick=function(){mgrActiveOrg=o.id;renderMgr();document.getElementById('batchResult').textContent='';};
+    tabs.appendChild(tab);
+  });
+  var ml=document.getElementById('memberList');ml.innerHTML='';
+  if(mgrActiveOrg){
+    if(!members[mgrActiveOrg])members[mgrActiveOrg]=[];
+    members[mgrActiveOrg].forEach(function(m,i){
+      var row=document.createElement('div');row.className='mgr-row';
+      var inp=document.createElement('input');inp.type='text';inp.value=m;
+      (function(idx){inp.onchange=function(){members[mgrActiveOrg][idx]=this.value;};})(i);
+      var btn=document.createElement('button');btn.className='del-btn';btn.textContent='刪除';
+      (function(idx){btn.onclick=function(){deleteMember(mgrActiveOrg,idx);};})(i);
+      row.appendChild(inp);row.appendChild(btn);ml.appendChild(row);
+    });
+  }
+}
+function addOrg(){var input=document.getElementById('newOrgName'),name=input.value.trim();if(!name){alert('請輸入機構名稱');return;}var id='ORG_'+Date.now();orgs.push({id:id,name:name});members[id]=[];input.value='';mgrActiveOrg=id;renderOrgSelect();renderMgr();}
+function deleteOrg(id){if(!confirm('確定刪除此機構？'))return;orgs=orgs.filter(function(o){return o.id!==id;});delete members[id];mgrActiveOrg=orgs.length>0?orgs[0].id:null;renderOrgSelect();renderMgr();}
+function addMember(){var input=document.getElementById('newMemberName'),name=input.value.trim();if(!name)return;if(!mgrActiveOrg)return;if(!members[mgrActiveOrg])members[mgrActiveOrg]=[];members[mgrActiveOrg].push(name);input.value='';renderMgr();}
+function deleteMember(orgId,idx){members[orgId].splice(idx,1);renderMgr();}
+function batchAddMembers(){if(!mgrActiveOrg){alert('請先選擇機構');return;}var raw=document.getElementById('batchInput').value;var names=raw.split('\n').map(function(s){return s.trim();}).filter(function(s){return s.length>0;});if(names.length===0){alert('請輸入姓名');return;}if(!members[mgrActiveOrg])members[mgrActiveOrg]=[];names.forEach(function(n){members[mgrActiveOrg].push(n);});document.getElementById('batchInput').value='';document.getElementById('batchResult').textContent='已新增 '+names.length+' 位。';renderMgr();}
+function replaceMembers(){if(!mgrActiveOrg){alert('請先選擇機構');return;}var raw=document.getElementById('batchInput').value;var names=raw.split('\n').map(function(s){return s.trim();}).filter(function(s){return s.length>0;});if(names.length===0){alert('請輸入姓名');return;}if(!confirm('確定取代現有名單？'))return;members[mgrActiveOrg]=names;document.getElementById('batchInput').value='';document.getElementById('batchResult').textContent='已取代為 '+names.length+' 位。';renderMgr();}
+function saveMgr(){
+  var curOrgId=document.getElementById('orgSelect').value;
+  var curName=document.getElementById('nameSelect').value;
+  closeMgr();
+  renderOrgSelect();
+  if(!curOrgId && mgrActiveOrg){
+    document.getElementById('orgSelect').value=mgrActiveOrg;
+  }
+  onOrgChange();
+  if(curName){
+    var ns=document.getElementById('nameSelect');
+    for(var i=0;i<ns.options.length;i++){
+      if(ns.options[i].value===curName){ns.value=curName;break;}
+    }
+  }
+}
+
+function collectFormData(){
+  var eat10Vals=[],chewVals=[];
+  eat10Items.forEach(function(_,i){eat10Vals.push(parseInt(document.getElementById('e'+i).value));});
+  chewItems.forEach(function(_,i){chewVals.push(parseInt(document.getElementById('c'+i).value));});
+  var msSelected={},msOpts={};
+  ['disease','eathabit','diet','overall'].forEach(function(k){msSelected[k]=Array.from(msState[k]);msOpts[k]=msOptions[k].slice();});
+  return {
+    exportedAt:new Date().toISOString(),
+    org:document.getElementById('orgSelect').value,
+    name:document.getElementById('nameSelect').value,
+    gender:document.getElementById('gender').value,
+    age:document.getElementById('age').value,
+    height:document.getElementById('height').value,
+    weight:document.getElementById('weight').value,
+    vision:document.getElementById('vision').value,
+    hearing:document.getElementById('hearing').value,
+    cognition:document.getElementById('cognition').value,
+    cheekPuff:document.getElementById('cheekPuff').value,
+    tongueFlex:document.getElementById('tongueFlex').value,
+    eat10:eat10Vals,
+    teethFunc:document.getElementById('teethFunc').value,
+    teethOther:document.getElementById('teethOther').value,
+    chew:chewVals,
+    dietHabit:document.getElementById('dietHabit').value,
+    mealTime:document.getElementById('mealTime').value,
+    msSelected:msSelected,
+    msOpts:msOpts,
+    noteText:document.getElementById('noteText').value,
+    signature:document.getElementById('signature').value,
+    assessDate:document.getElementById('assessDate').value
+  };
+}
+function exportJSON(){var data=collectFormData();var name=(data.name||'未命名')+'_評估表_'+(data.assessDate||new Date().toISOString().split('T')[0]);downloadJSON(data,name+'.json');}
+function importJSON(event){var file=event.target.files[0];if(!file)return;var reader=new FileReader();reader.onload=function(e){try{var data=JSON.parse(e.target.result);applyFormData(data);alert('匯入成功！');}catch(err){alert('JSON 格式錯誤。');}};reader.readAsText(file);event.target.value='';}
+function applyFormData(d){
+  renderOrgSelect();
+  if(d.org){document.getElementById('orgSelect').value=d.org;onOrgChange();}
+  setTimeout(function(){if(d.name)document.getElementById('nameSelect').value=d.name;},50);
+  if(d.gender)document.getElementById('gender').value=d.gender;
+  if(d.age)document.getElementById('age').value=d.age;
+  if(d.height)document.getElementById('height').value=d.height;
+  if(d.weight)document.getElementById('weight').value=d.weight;
+  calcBMI();
+  if(d.vision)document.getElementById('vision').value=d.vision;
+  if(d.hearing)document.getElementById('hearing').value=d.hearing;
+  if(d.cognition)document.getElementById('cognition').value=d.cognition;
+  if(d.cheekPuff)document.getElementById('cheekPuff').value=d.cheekPuff;
+  if(d.tongueFlex)document.getElementById('tongueFlex').value=d.tongueFlex;
+  if(d.eat10)d.eat10.forEach(function(v,i){var el=document.getElementById('e'+i);if(el)el.value=v;});updateEat10();
+  if(d.teethFunc)document.getElementById('teethFunc').value=d.teethFunc;
+  if(d.teethOther)document.getElementById('teethOther').value=d.teethOther;checkOtherTeeth();
+  if(d.chew)d.chew.forEach(function(v,i){var el=document.getElementById('c'+i);if(el)el.value=v;});updateChew();
+  if(d.dietHabit)document.getElementById('dietHabit').value=d.dietHabit;
+  if(d.mealTime)document.getElementById('mealTime').value=d.mealTime;
+  if(d.noteText)document.getElementById('noteText').value=d.noteText;
+  if(d.signature)document.getElementById('signature').value=d.signature;
+  if(d.assessDate)document.getElementById('assessDate').value=d.assessDate;
+  ['disease','eathabit','diet','overall'].forEach(function(k){
+    if(d.msOpts&&d.msOpts[k])msOptions[k]=d.msOpts[k];
+    msState[k].clear();buildMS('ms-'+k,k);
+    if(d.msSelected&&d.msSelected[k]){
+      d.msSelected[k].forEach(function(i){
+        msState[k].add(i);
+        var cb=document.getElementById('mscb-'+k+'-'+i);if(cb){cb.checked=true;var opt=document.getElementById('mso-'+k+'-'+i);if(opt)opt.classList.add('sel');}
+      });
+      updateMSTrigger(k);renderTags(k);updatePrintText(k);
+    }
+  });
+}
+function exportOrgJSON(){downloadJSON({orgs:orgs,members:members},'機構人員設定.json');}
+function importOrgJSON(event){var file=event.target.files[0];if(!file)return;var reader=new FileReader();reader.onload=function(e){try{var data=JSON.parse(e.target.result);if(!data.orgs||!data.members)throw new Error();if(!confirm('確定取代機構設定？'))return;orgs=data.orgs;members=data.members;mgrActiveOrg=orgs.length>0?orgs[0].id:null;renderOrgSelect();renderMgr();alert('匯入成功！');}catch(err){alert('格式錯誤。');}};reader.readAsText(file);event.target.value='';}
+function downloadJSON(data,filename){var blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename;document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(a.href);}
+
+function resetForm(){
+  if(!confirm('確定要清除所有資料重新填寫？'))return;
+  document.getElementById('orgSelect').value='';document.getElementById('nameSelect').innerHTML='<option value="">── 請先選擇機構 ──</option>';
+  ['age','height','weight','signature'].forEach(function(id){document.getElementById(id).value='';});
+  ['gender','vision','hearing','cognition','cheekPuff','tongueFlex','teethFunc','dietHabit','mealTime'].forEach(function(id){document.getElementById(id).selectedIndex=0;});
+  document.getElementById('bmiDisplay').textContent='—';document.getElementById('bmiDisplay').className='bmi-badge';
+  document.getElementById('noteText').value='';
+  eat10Items.forEach(function(_,i){document.getElementById('e'+i).selectedIndex=0;});updateEat10();
+  chewItems.forEach(function(_,i){document.getElementById('c'+i).selectedIndex=0;});updateChew();
+  document.getElementById('teethOtherField').style.display='none';
+  ['disease','eathabit','diet','overall'].forEach(function(key){msState[key].clear();buildMS('ms-'+key,key);updatePrintText(key);});
+  document.getElementById('assessDate').value=new Date().toISOString().split('T')[0];
+}
+
+renderOrgSelect();
+['disease','eathabit','diet','overall'].forEach(function(k){buildMS('ms-'+k,k);});
+document.getElementById('assessDate').value=new Date().toISOString().split('T')[0];
+renderRecordSelect();
+</script>
+</body>
+</html>
