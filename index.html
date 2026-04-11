@@ -113,6 +113,17 @@ tr:hover td{background:#fafaf8;}
 .login-box button { width:100%; padding:12px; background:#185FA5; color:#fff; font-size:15px; border:none; border-radius:6px; cursor:pointer; font-weight:bold; }
 .login-box button:hover { background:#0C447C; }
 
+/* Dashboard 專屬 CSS */
+.dash-col { flex:1; border:1px solid #d0d0c8; border-radius:8px; padding:10px; background:#fff; display:flex; flex-direction:column;}
+.dash-col h4 { margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid #e0e0e0; font-size:14px; }
+.dash-item { padding:8px 10px; border-bottom:1px solid #f0f0ec; cursor:pointer; display:flex; justify-content:space-between; align-items:center; font-size:13px; }
+.dash-item:last-child { border-bottom:none; }
+.dash-item:hover { background:#f5f5f2; }
+.dash-item.done { color:#085041; }
+.dash-item.pending { color:#A32D2D; }
+.dash-action-btn { background:#fff; border:1px solid #ccc; border-radius:4px; padding:3px 8px; cursor:pointer; font-size:11px; color:#555; }
+.dash-action-btn:hover { border-color:#185FA5; color:#185FA5; background:#E6F1FB; }
+
 @media print{
   @page{size:A4;margin:10mm 14mm;}
   body{background:#fff;padding:0;font-size:13px;}
@@ -168,6 +179,7 @@ tr:hover td{background:#fafaf8;}
     <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
       <span style="font-size:13px;color:#185FA5;white-space:nowrap;font-weight:bold;">☁️ 雲端資料庫</span>
       <span id="recOrgLabel" style="font-size:12px;color:#555;background:#fff;border-radius:4px;padding:3px 8px;white-space:nowrap;">請先選擇機構</span>
+      <button class="rec-btn outline" onclick="openDashboard()" style="margin-left:10px;">📊 評估進度與篩選</button>
       <button class="rec-btn" onclick="saveRecord()" style="margin-left:auto;">💾 儲存至雲端</button>
     </div>
     <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
@@ -244,7 +256,7 @@ tr:hover td{background:#fafaf8;}
   
   <div class="field-row" style="margin-top:10px; background:#fafaf8; padding:8px; border:1px solid #e0e0d8; border-radius:5px;">
     <div class="field">
-      <label>備註</label>
+      <label>EAT-10 評估備註</label>
       <select id="eat10Remark" onchange="checkEat10Remark()">
         <option value="">無</option>
         <option>無法評估</option>
@@ -275,7 +287,7 @@ tr:hover td{background:#fafaf8;}
 
   <div class="field-row" style="margin-top:10px; background:#fafaf8; padding:8px; border:1px solid #e0e0d8; border-radius:5px;">
     <div class="field">
-      <label>備註</label>
+      <label>咀嚼能力評估備註</label>
       <select id="chewRemark" onchange="checkChewRemark()">
         <option value="">無</option>
         <option>無法評估</option>
@@ -337,7 +349,7 @@ tr:hover td{background:#fafaf8;}
 </div>
 </div>
 
-<div class="overlay" id="mgrOverlay" onclick="overlayClick(event)">
+<div class="overlay" id="mgrOverlay" onclick="overlayClick(event, 'mgrOverlay')">
   <div class="modal">
     <div class="modal-title">
       <span>⚙ 管理機構與人員 (將同步至雲端)</span>
@@ -381,6 +393,47 @@ tr:hover td{background:#fafaf8;}
   </div>
 </div>
 
+<div class="overlay" id="dashOverlay" onclick="overlayClick(event, 'dashOverlay')">
+  <div class="modal" style="width:750px;">
+    <div class="modal-title">
+      <span>📊 <span id="dashOrgName">機構</span> 評估進度總覽</span>
+      <span class="modal-close" onclick="closeDashboard()">×</span>
+    </div>
+    
+    <div class="field-row" style="background:#f0f4fb; padding:12px; border:1px solid #c8d8f0; border-radius:8px; align-items:flex-end;">
+       <div class="field">
+         <label style="color:#185FA5; font-weight:bold;">篩選年份</label>
+         <select id="filterYear" onchange="renderDashboard()"></select>
+       </div>
+       <div class="field">
+         <label style="color:#185FA5; font-weight:bold;">篩選期間</label>
+         <select id="filterPeriod" onchange="renderDashboard()">
+           <option value="ALL">全年</option>
+           <option value="Q1">Q1 (1-3月)</option>
+           <option value="Q2">Q2 (4-6月)</option>
+           <option value="Q3">Q3 (7-9月)</option>
+           <option value="Q4">Q4 (10-12月)</option>
+           <option value="M1">1月</option><option value="M2">2月</option><option value="M3">3月</option>
+           <option value="M4">4月</option><option value="M5">5月</option><option value="M6">6月</option>
+           <option value="M7">7月</option><option value="M8">8月</option><option value="M9">9月</option>
+           <option value="M10">10月</option><option value="M11">11月</option><option value="M12">12月</option>
+         </select>
+       </div>
+    </div>
+
+    <div style="display:flex; gap:15px; margin-top:15px; height:350px;">
+       <div class="dash-col">
+         <h4 style="color:#085041;">✅ 已評估 (<span id="countDone">0</span>)</h4>
+         <div id="listDone" style="overflow-y:auto; flex:1;"></div>
+       </div>
+       <div class="dash-col">
+         <h4 style="color:#A32D2D;">❌ 尚未評估 (<span id="countPending">0</span>)</h4>
+         <div id="listPending" style="overflow-y:auto; flex:1;"></div>
+       </div>
+    </div>
+  </div>
+</div>
+
 <script>
 // ==========================================
 // Firebase 雲端資料庫設定區
@@ -394,7 +447,6 @@ const firebaseConfig = {
   appId: "1:833256269968:web:8a761972fbef7f64561015"
 };
 
-// 初始化 Firebase
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
@@ -418,12 +470,7 @@ function doLogin() {
   auth.signInWithEmailAndPassword(email, pwd)
     .catch(err => alert("登入失敗，請檢查帳號密碼是否正確。(" + err.message + ")"));
 }
-
-function doLogout() {
-  if(confirm("確定要登出嗎？")) {
-    auth.signOut();
-  }
-}
+function doLogout() { if(confirm("確定要登出嗎？")) { auth.signOut(); } }
 
 // ==========================================
 // 核心變數與雲端同步邏輯
@@ -431,6 +478,7 @@ function doLogout() {
 var orgs = [];
 var members = {};
 var mgrActiveOrg = null;
+var allCurrentOrgRecords = []; // 存放目前機構的所有雲端紀錄，供 Dashboard 使用
 
 function loadCloudSettings() {
   db.collection("system").doc("settings").get().then(doc => {
@@ -451,10 +499,8 @@ function loadCloudSettings() {
 }
 
 function saveCloudSettings() {
-  db.collection("system").doc("settings").set({
-    orgs: orgs,
-    members: members
-  }).catch(e => console.error("儲存設定失敗", e));
+  db.collection("system").doc("settings").set({ orgs: orgs, members: members })
+    .catch(e => console.error("儲存設定失敗", e));
 }
 
 function currentOrgId() { return document.getElementById('orgSelect').value || '__none__'; }
@@ -479,11 +525,16 @@ function renderRecordSelect() {
   
   db.collection("records").where("orgId", "==", orgId).get().then(snap => {
     sel.innerHTML = '<option value="">── 選擇雲端儲存個案 ──</option>';
+    allCurrentOrgRecords = []; // 更新本地快取供 Dashboard 使用
+    
     if (snap.empty) {
       var opt = document.createElement('option'); opt.disabled = true; opt.textContent = '（此機構尚無儲存個案）'; sel.appendChild(opt);
     } else {
       var keys = [];
-      snap.forEach(doc => { keys.push(doc.data().recordKey); });
+      snap.forEach(doc => { 
+        allCurrentOrgRecords.push(doc.data());
+        keys.push(doc.data().recordKey); 
+      });
       keys.sort().reverse().forEach(k => {
         var opt = document.createElement('option'); opt.value = k; opt.textContent = k; sel.appendChild(opt);
       });
@@ -513,15 +564,12 @@ function saveRecord() {
     alert('✅ 已成功儲存至雲端：\n【' + currentOrgName() + '】' + key);
     renderRecordSelect();
     setTimeout(() => { document.getElementById('recordSelect').value = key; }, 500);
-  }).catch(err => {
-    alert("儲存失敗：" + err.message);
-  });
+  }).catch(err => { alert("儲存失敗：" + err.message); });
 }
 
 function loadRecord() {
   var key = document.getElementById('recordSelect').value;
   if (!key) { alert('請先選擇個案'); return; }
-  
   var orgId = currentOrgId();
   var docId = orgId + "___" + key;
   
@@ -539,7 +587,6 @@ function deleteRecord() {
   var key = document.getElementById('recordSelect').value;
   if (!key) { alert('請先選擇個案'); return; }
   if (!confirm('⚠️ 警告：確定從雲端永久刪除「' + key + '」嗎？\n刪除後無法復原！')) return;
-  
   var orgId = currentOrgId();
   var docId = orgId + "___" + key;
   
@@ -548,6 +595,102 @@ function deleteRecord() {
     resetForm();
     alert("🗑️ 已從雲端永久刪除");
   }).catch(err => alert("刪除失敗：" + err.message));
+}
+
+// ==========================================
+// 📊 評估進度 Dashboard 邏輯
+// ==========================================
+function openDashboard() {
+  let orgId = currentOrgId();
+  if(!orgId || orgId === '__none__') return alert("請先在左上角選擇機構，才能查看進度總覽。");
+  
+  document.getElementById('dashOrgName').textContent = currentOrgName().replace(/（.*?）/g, '');
+  
+  // 初始化年份選單 (前後2年)
+  let ySel = document.getElementById('filterYear');
+  if(ySel.options.length === 0) {
+    let curY = new Date().getFullYear();
+    for(let y = curY - 2; y <= curY + 2; y++) {
+      ySel.add(new Option(y + "年", y));
+    }
+    ySel.value = curY;
+  }
+  
+  document.getElementById('dashOverlay').classList.add('show');
+  
+  // 確保抓到最新資料後再繪製
+  db.collection("records").where("orgId", "==", orgId).get().then(snap => {
+    allCurrentOrgRecords = [];
+    snap.forEach(doc => allCurrentOrgRecords.push(doc.data()));
+    renderDashboard();
+  });
+}
+
+function closeDashboard() { document.getElementById('dashOverlay').classList.remove('show'); }
+
+function renderDashboard() {
+  let year = document.getElementById('filterYear').value;
+  let period = document.getElementById('filterPeriod').value;
+  let orgMembers = members[currentOrgId()] || [];
+
+  // 根據條件過濾紀錄
+  let filteredRecords = allCurrentOrgRecords.filter(r => {
+    if(!r.data || !r.data.assessDate) return false;
+    let d = new Date(r.data.assessDate);
+    let rY = d.getFullYear().toString();
+    let rM = d.getMonth() + 1; // 1-12
+
+    if(rY !== year) return false;
+    if(period === 'ALL') return true;
+    if(period === 'Q1') return rM >= 1 && rM <= 3;
+    if(period === 'Q2') return rM >= 4 && rM <= 6;
+    if(period === 'Q3') return rM >= 7 && rM <= 9;
+    if(period === 'Q4') return rM >= 10 && rM <= 12;
+    if(period.startsWith('M')) return rM.toString() === period.substring(1);
+    return false;
+  });
+
+  // 抓出有被評估過的人名 (過濾掉重複名字，只留一份)
+  let doneNames = new Set(filteredRecords.map(r => r.data.name));
+  
+  // 總名單減去已評估，就是未評估
+  let pendingNames = orgMembers.filter(m => !doneNames.has(m));
+
+  // 更新數字
+  document.getElementById('countDone').textContent = doneNames.size;
+  document.getElementById('countPending').textContent = pendingNames.length;
+
+  // 繪製清單
+  let doneHtml = Array.from(doneNames).map(name => {
+    // 找出該名單在這次篩選中的第一筆紀錄
+    let rec = filteredRecords.find(r => r.data.name === name);
+    return `<div class="dash-item done" onclick="loadFromDash('${rec.recordKey}')">
+              <span>${name} <small style="color:#888;">(${rec.data.assessDate})</small></span>
+              <button class="dash-action-btn">查看資料</button>
+            </div>`;
+  }).join('');
+
+  let pendingHtml = pendingNames.map(name => {
+    return `<div class="dash-item pending">
+              <span>${name}</span>
+              <button class="dash-action-btn" onclick="startNewFromDash('${name}')">快速建立</button>
+            </div>`;
+  }).join('');
+
+  document.getElementById('listDone').innerHTML = doneHtml || '<div style="color:#999; font-size:12px; padding:10px;">（此期間無紀錄）</div>';
+  document.getElementById('listPending').innerHTML = pendingHtml || '<div style="color:#085041; font-size:12px; padding:10px; font-weight:bold;">🎉 全數完成評估！</div>';
+}
+
+function loadFromDash(key) {
+  document.getElementById('recordSelect').value = key;
+  loadRecord();
+  closeDashboard();
+}
+
+function startNewFromDash(name) {
+  resetForm(false); // 不跳警告直接清空
+  document.getElementById('nameSelect').value = name;
+  closeDashboard();
 }
 
 // ==========================================
@@ -698,7 +841,7 @@ function doPrint(){updateAllPrintText();window.print();}
 // ==========================================
 function openMgr(){mgrActiveOrg=orgs.length>0?orgs[0].id:null;renderMgr();document.getElementById('mgrOverlay').classList.add('show');}
 function closeMgr(){document.getElementById('mgrOverlay').classList.remove('show');}
-function overlayClick(e){if(e.target===document.getElementById('mgrOverlay'))closeMgr();}
+function overlayClick(e, id){if(e.target===document.getElementById(id)) document.getElementById(id).classList.remove('show');}
 function switchMemberTab(tab){
   document.getElementById('tabSingle').classList.toggle('active',tab==='single');
   document.getElementById('tabBatch').classList.toggle('active',tab==='batch');
@@ -855,8 +998,8 @@ function applyFormData(d){
 function exportJSON(){var data=collectFormData();var name=(data.name||'未命名')+'_評估表_'+(data.assessDate||new Date().toISOString().split('T')[0]);downloadJSON(data,name+'.json');}
 function downloadJSON(data,filename){var blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename;document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(a.href);}
 
-function resetForm(){
-  if(!confirm('確定要清除所有資料重新填寫？'))return;
+function resetForm(askConfirm = true){
+  if(askConfirm && !confirm('確定要清除所有資料重新填寫？')) return;
   document.getElementById('orgSelect').value='';document.getElementById('nameSelect').innerHTML='<option value="">── 請先選擇機構 ──</option>';
   
   ['age','height','weight','signature','cheekPuffOther','tongueFlexOther','eat10RemarkOther','chewRemarkOther'].forEach(function(id){document.getElementById(id).value='';});
