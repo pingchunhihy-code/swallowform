@@ -186,8 +186,7 @@ tr:hover td{background:#fafaf8;}
       <button class="rec-btn" onclick="saveRecord()" style="margin-left:auto;">💾 儲存至雲端</button>
     </div>
     <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-      <select id="recordSelect" style="flex:1;min-width:180px;max-width:360px;font-size:13px;"><option value="">── 選擇雲端儲存個案 ──</option></select>
-      <button class="rec-btn outline" onclick="loadRecord()">↓ 載入資料</button>
+      <select id="recordSelect" onchange="loadRecord()" style="flex:1;min-width:180px;max-width:360px;font-size:13px;"><option value="">── 選擇雲端儲存個案 ──</option></select>
       <button class="rec-btn danger" onclick="deleteRecord()">✕ 永久刪除</button>
     </div>
   </div>
@@ -308,7 +307,7 @@ tr:hover td{background:#fafaf8;}
       <select id="dietHabit"><option value="">請選擇</option><option>軟質</option><option>細碎乾飯</option><option>細碎稀飯</option><option>半流質</option><option>細泥飲食</option><option>素食乾飯</option><option>素食稀飯</option></select>
     </div>
     <div class="field"><label>平均用餐時間</label>
-      <select id="mealTime"><option value="">請選擇</option><option>15分鐘以內</option><option>15–30分鐘</option><option>30分鐘以上</option></select>
+      <select id="mealTime"><option value="">請选择</option><option>15分鐘以內</option><option>15–30分鐘</option><option>30分鐘以上</option></select>
     </div>
   </div>
   <div class="field-row" style="margin-bottom:0;">
@@ -520,7 +519,7 @@ function currentOrgName() {
 function renderRecordSelect() {
   var sel = document.getElementById('recordSelect');
   var cur = sel.value;
-  sel.innerHTML = '<option value="">── 讀取雲端資料中... ──</option>';
+  sel.innerHTML = '<option value="">── 選擇雲端儲存個案 ──</option>';
   var orgId = currentOrgId();
   if (!orgId || orgId === '__none__') {
     sel.innerHTML = '<option value="">── 選擇雲端儲存個案 ──</option>';
@@ -571,16 +570,18 @@ function saveRecord() {
   }).catch(err => { alert("儲存失敗：" + err.message); });
 }
 
+// 變更點：下拉選單改變時，自動執行此函數
 function loadRecord() {
   var key = document.getElementById('recordSelect').value;
-  if (!key) { alert('請先選擇個案'); return; }
+  if (!key) return; // 選擇空選項時直接返回，不跳警告
+  
   var orgId = currentOrgId();
   var docId = orgId + "___" + key;
   
   db.collection("records").doc(docId).get().then(doc => {
     if (doc.exists) {
       applyFormData(doc.data().data);
-      alert("✅ 已從雲端載入資料");
+      // 移除載入成功的 alert，讓自動載入更順暢不打擾
     } else {
       alert('在雲端找不到此個案');
     }
@@ -749,7 +750,6 @@ var msPh={disease:'請選擇疾病史…',eathabit:'請選擇飲食習慣…',di
 var msAddable={disease:true,eathabit:true,overall:true};
 var msPrintId={disease:'print-disease',eathabit:'print-eathabit',diet:'print-diet',overall:'print-overall'};
 
-// 新增：包含刪除按鈕(×)的選單建立功能
 function buildMS(cid,key){
   var wrap=document.getElementById(cid);if(!wrap)return;
   wrap.innerHTML='';
@@ -1013,8 +1013,8 @@ function applyFormData(d){
 function exportJSON(){var data=collectFormData();var name=(data.name||'未命名')+'_評估表_'+(data.assessDate||new Date().toISOString().split('T')[0]);downloadJSON(data,name+'.json');}
 function downloadJSON(data,filename){var blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename;document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(a.href);}
 
-function resetForm(askConfirm = true){
-  if(askConfirm && !confirm('確定要清除所有資料重新填寫？')) return;
+function resetForm(){
+  if(!confirm('確定要清除所有資料重新填寫？')) return;
   document.getElementById('orgSelect').value='';document.getElementById('nameSelect').innerHTML='<option value="">── 請先選擇機構 ──</option>';
   
   ['age','height','weight','signature','cheekPuffOther','tongueFlexOther','eat10RemarkOther','chewRemarkOther'].forEach(function(id){document.getElementById(id).value='';});
