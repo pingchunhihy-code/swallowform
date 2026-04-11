@@ -55,15 +55,12 @@ tr:hover td{background:#fafaf8;}
 .ms-opt.sel{background:#E6F1FB;}
 .ms-opt input{width:14px;height:14px;flex-shrink:0;margin-top:2px;}
 .ms-opt label{font-size:12px;cursor:pointer;line-height:1.5;}
-
-/* 新增排序與刪除按鈕 CSS */
 .ms-opt-ctrls{display:flex; gap:8px; margin-left:auto; align-items:center; padding-left:8px;}
 .ms-opt-move{color:#bbb; cursor:pointer; font-size:14px; user-select:none; font-weight:bold; line-height:1;}
 .ms-opt-move:hover{color:#185FA5;}
 .ms-opt-move.disabled{color:#eee; cursor:default;}
 .ms-opt-del{color:#ccc; font-size:18px; line-height:1; cursor:pointer; user-select:none;}
 .ms-opt-del:hover{color:#A32D2D;}
-
 .ms-add-row{display:flex;gap:6px;padding:7px 10px;border-top:1px solid #e8e8e8;background:#fafaf8;position:sticky;bottom:0;}
 .ms-add-row input{flex:1;font-size:12px;padding:4px 7px;}
 .ms-add-btn{background:#E6F1FB;border:1px solid #85B7EB;color:#185FA5;border-radius:5px;padding:4px 10px;font-size:11px;cursor:pointer;white-space:nowrap;}
@@ -133,31 +130,38 @@ tr:hover td{background:#fafaf8;}
 .dash-action-btn { background:#fff; border:1px solid #ccc; border-radius:4px; padding:3px 8px; cursor:pointer; font-size:11px; color:#555; }
 .dash-action-btn:hover { border-color:#185FA5; color:#185FA5; background:#E6F1FB; }
 
+/* ★★★ 列印版面極致壓縮 ★★★ */
 @media print{
-  @page{size:A4;margin:10mm 14mm;}
-  body{background:#fff;padding:0;font-size:13px;}
+  @page{size:A4;margin:8mm 10mm;} /* 縮小頁邊距 */
+  body{background:#fff;padding:0;font-size:12px;line-height:1.35;} /* 字體縮小為 12px，行高壓縮 */
   .form-wrap{box-shadow:none;padding:0;border-radius:0;max-width:100%;}
-  .form-header{padding-bottom:5px;margin-bottom:6px;}
-  .form-header .sub-title{font-size:13px;}
-  .org-select{font-size:16px;}
+  .form-header{padding-bottom:2px;margin-bottom:4px;}
+  .form-header .sub-title{font-size:12px;margin-top:0;}
+  .org-select{font-size:15px;border-bottom:1px solid #666;padding:0;}
   .mgr-btn,.logout-btn,.btn-row,.overlay,.records-bar{display:none!important;}
-  .section{padding:.5rem .8rem;margin-bottom:.45rem;border-radius:4px;page-break-inside:avoid;}
-  .section-title{font-size:14px;margin-bottom:6px;padding:5px 10px;background:#f0f0ec;border-left:4px solid #378ADD;border-radius:3px;}
-  .field label{font-size:11px;}
-  input,select{font-size:13px;padding:3px 6px;background:#fff;border-color:#ccc;}
-  .bmi-badge{font-size:13px;padding:3px 6px;min-height:24px;}
-  table{font-size:13px;}
-  th{font-size:13px;padding:4px 6px;}
-  td{font-size:13px;padding:4px 6px;}
-  .ms-trigger{font-size:13px;padding:3px 6px;min-height:26px;display:none;}
+  
+  .section{padding:.3rem .5rem;margin-bottom:.3rem;border:1px solid #aaa;border-radius:3px;page-break-inside:avoid;} /* 區塊內縮壓縮 */
+  .section-title{font-size:13px;margin-bottom:4px;padding:3px 6px;background:#eee;border-left:3px solid #666;}
+  .field-row{gap:4px;margin-bottom:4px;} /* 欄位間距壓縮 */
+  .field label{font-size:10px;margin-bottom:1px;}
+  input,select,textarea{font-size:12px;padding:2px 4px;background:#fff;border:1px solid #aaa;}
+  
+  .bmi-badge{font-size:12px;padding:2px 4px;min-height:22px;}
+  table{font-size:12px;margin-bottom:2px;}
+  th{font-size:12px;padding:3px 4px;}
+  td{font-size:12px;padding:3px 4px;}
+  
+  .ms-trigger{display:none;}
   .ms-dd{display:none!important;}
   .ms-tags{display:none!important;}
-  .print-disease{display:block;font-size:13px;color:#222;padding:4px 0;line-height:1.6;}
-  .tag{font-size:12px;padding:1px 6px;}
-  .score-badge{font-size:12px;padding:2px 8px;}
-  textarea{font-size:13px;padding:3px 6px;border-color:#ccc;background:#fff;}
-  .page-break{page-break-before:always;}
-  .field-row{gap:6px;margin-bottom:6px;}
+  .print-disease{display:block;font-size:12px;color:#000;padding:2px 0;line-height:1.4;}
+  .score-badge{font-size:11px;padding:1px 6px;}
+  
+  /* 針對提示文字壓縮 */
+  p {margin-bottom: 2px!important; font-size:11px!important;}
+  
+  /* 確保隱藏背景顏色的列印問題 */
+  .field-row[style*="background"] { background:transparent!important; border:none!important; padding:0!important;}
 }
 </style>
 </head>
@@ -274,8 +278,6 @@ tr:hover td{background:#fafaf8;}
     </div>
   </div>
 </div>
-
-<div class="page-break"></div>
 
 <div class="section">
   <div class="section-title">三、咀嚼能力篩檢表</div>
@@ -497,7 +499,6 @@ function loadCloudSettings() {
       members = data.members || {};
       if(data.msOptions) {
          msOptions = data.msOptions;
-         // 依照雲端選項重新建立選單
          ['disease','eathabit','diet','overall'].forEach(function(k){
             buildMS('ms-'+k,k);
             updatePrintText(k);
@@ -519,7 +520,7 @@ function saveCloudSettings() {
   db.collection("system").doc("settings").set({ 
     orgs: orgs, 
     members: members,
-    msOptions: msOptions // 新增儲存自訂選項與排序
+    msOptions: msOptions 
   }).catch(e => console.error("儲存設定失敗", e));
 }
 
@@ -617,15 +618,13 @@ function deleteRecord() {
   }).catch(err => alert("刪除失敗：" + err.message));
 }
 
-// 新增：切換姓名時自動清空表單，但保留身分
 function onNameChange() {
   var n = document.getElementById('nameSelect').value;
-  if (!n) return; // 如果選回空白就忽略
+  if (!n) return;
   clearFormKeepIdentity();
 }
 
 function clearFormKeepIdentity(){
-  // 清空各項數值
   ['age','height','weight','signature','cheekPuffOther','tongueFlexOther','eat10RemarkOther','chewRemarkOther'].forEach(function(id){document.getElementById(id).value='';});
   ['gender','vision','hearing','cognition','cheekPuff','tongueFlex','eat10Remark','chewRemark','teethFunc','dietHabit','mealTime'].forEach(function(id){document.getElementById(id).selectedIndex=0;});
   
@@ -640,7 +639,6 @@ function clearFormKeepIdentity(){
   
   ['disease','eathabit','diet','overall'].forEach(function(key){msState[key].clear();buildMS('ms-'+key,key);updatePrintText(key);});
   
-  // 清空雲端選單狀態，表示這是一筆新紀錄
   document.getElementById('recordSelect').value = '';
 }
 
@@ -809,7 +807,6 @@ function buildMS(cid,key){
   var tagsDiv=document.createElement('div');tagsDiv.className='ms-tags';tagsDiv.id='mstags-'+key;wrap.appendChild(tagsDiv);
 }
 
-// 變更點：加入排序(上下)與刪除的控制按鈕
 function rebuildDDItems(dd,key){
   var existingAdd=dd.querySelector('.ms-add-row');
   dd.querySelectorAll('.ms-opt').forEach(function(el){el.remove();});
@@ -828,7 +825,6 @@ function rebuildDDItems(dd,key){
   });
 }
 
-// 排序選項功能
 function moveMSOption(key, index, dir, event) {
   event.stopPropagation();
   if(dir === -1 && index === 0) return;
@@ -853,7 +849,7 @@ function moveMSOption(key, index, dir, event) {
   renderTags(key);
   updatePrintText(key);
   
-  saveCloudSettings(); // 同步儲存排序到雲端
+  saveCloudSettings(); 
 }
 
 function deleteMSOption(key, index, event) {
@@ -871,7 +867,7 @@ function deleteMSOption(key, index, event) {
   updateMSTrigger(key);
   renderTags(key);
   updatePrintText(key);
-  saveCloudSettings(); // 同步刪除結果到雲端
+  saveCloudSettings(); 
 }
 
 function toggleMSOpt(key,i,checked){
@@ -889,7 +885,7 @@ function addMSOption(key){
   var dd=document.getElementById('msdd-'+key);rebuildDDItems(dd,key);
   updateMSTrigger(key);renderTags(key);updatePrintText(key);
   inp.value='';
-  saveCloudSettings(); // 同步新增選項到雲端
+  saveCloudSettings(); 
 }
 
 function toggleMS(key){
