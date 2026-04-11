@@ -55,6 +55,9 @@ tr:hover td{background:#fafaf8;}
 .ms-opt.sel{background:#E6F1FB;}
 .ms-opt input{width:14px;height:14px;flex-shrink:0;margin-top:2px;}
 .ms-opt label{font-size:12px;cursor:pointer;line-height:1.5;}
+/* 刪除按鈕 CSS */
+.ms-opt-del{margin-left:auto; color:#ccc; font-size:18px; line-height:1; padding-left:8px; user-select:none;}
+.ms-opt-del:hover{color:#A32D2D;}
 .ms-add-row{display:flex;gap:6px;padding:7px 10px;border-top:1px solid #e8e8e8;background:#fafaf8;position:sticky;bottom:0;}
 .ms-add-row input{flex:1;font-size:12px;padding:4px 7px;}
 .ms-add-btn{background:#E6F1FB;border:1px solid #85B7EB;color:#185FA5;border-radius:5px;padding:4px 10px;font-size:11px;cursor:pointer;white-space:nowrap;}
@@ -256,7 +259,7 @@ tr:hover td{background:#fafaf8;}
   
   <div class="field-row" style="margin-top:10px; background:#fafaf8; padding:8px; border:1px solid #e0e0d8; border-radius:5px;">
     <div class="field">
-      <label>備註</label>
+      <label>EAT-10 評估備註</label>
       <select id="eat10Remark" onchange="checkEat10Remark()">
         <option value="">無</option>
         <option>無法評估</option>
@@ -287,7 +290,7 @@ tr:hover td{background:#fafaf8;}
 
   <div class="field-row" style="margin-top:10px; background:#fafaf8; padding:8px; border:1px solid #e0e0d8; border-radius:5px;">
     <div class="field">
-      <label>備註</label>
+      <label>咀嚼能力評估備註</label>
       <select id="chewRemark" onchange="checkChewRemark()">
         <option value="">無</option>
         <option>無法評估</option>
@@ -342,7 +345,8 @@ tr:hover td{background:#fafaf8;}
   </div>
 </div>
 
-<div class="btn-row">
+<div class="btn-row" style="margin-top:1.5rem; padding-top:1rem; border-top:1px solid #e8e8e8; align-items:center;">
+  <button class="save-btn" onclick="saveRecord()" style="font-size:14px; padding:10px 24px; background:#0C447C; box-shadow:0 4px 10px rgba(12,68,124,0.3);">💾 儲存至雲端</button>
   <button class="print-btn" onclick="doPrint()">列印 / 匯出 PDF</button>
   <button class="json-btn" onclick="exportJSON()">↓ 匯出備份檔</button>
   <button class="reset-btn" onclick="resetForm()">清除重填</button>
@@ -478,7 +482,7 @@ function doLogout() { if(confirm("確定要登出嗎？")) { auth.signOut(); } }
 var orgs = [];
 var members = {};
 var mgrActiveOrg = null;
-var allCurrentOrgRecords = []; // 存放目前機構的所有雲端紀錄，供 Dashboard 使用
+var allCurrentOrgRecords = []; 
 
 function loadCloudSettings() {
   db.collection("system").doc("settings").get().then(doc => {
@@ -525,7 +529,7 @@ function renderRecordSelect() {
   
   db.collection("records").where("orgId", "==", orgId).get().then(snap => {
     sel.innerHTML = '<option value="">── 選擇雲端儲存個案 ──</option>';
-    allCurrentOrgRecords = []; // 更新本地快取供 Dashboard 使用
+    allCurrentOrgRecords = []; 
     
     if (snap.empty) {
       var opt = document.createElement('option'); opt.disabled = true; opt.textContent = '（此機構尚無儲存個案）'; sel.appendChild(opt);
@@ -606,7 +610,6 @@ function openDashboard() {
   
   document.getElementById('dashOrgName').textContent = currentOrgName().replace(/（.*?）/g, '');
   
-  // 初始化年份選單 (前後2年)
   let ySel = document.getElementById('filterYear');
   if(ySel.options.length === 0) {
     let curY = new Date().getFullYear();
@@ -618,7 +621,6 @@ function openDashboard() {
   
   document.getElementById('dashOverlay').classList.add('show');
   
-  // 確保抓到最新資料後再繪製
   db.collection("records").where("orgId", "==", orgId).get().then(snap => {
     allCurrentOrgRecords = [];
     snap.forEach(doc => allCurrentOrgRecords.push(doc.data()));
@@ -633,12 +635,11 @@ function renderDashboard() {
   let period = document.getElementById('filterPeriod').value;
   let orgMembers = members[currentOrgId()] || [];
 
-  // 根據條件過濾紀錄
   let filteredRecords = allCurrentOrgRecords.filter(r => {
     if(!r.data || !r.data.assessDate) return false;
     let d = new Date(r.data.assessDate);
     let rY = d.getFullYear().toString();
-    let rM = d.getMonth() + 1; // 1-12
+    let rM = d.getMonth() + 1; 
 
     if(rY !== year) return false;
     if(period === 'ALL') return true;
@@ -650,19 +651,13 @@ function renderDashboard() {
     return false;
   });
 
-  // 抓出有被評估過的人名 (過濾掉重複名字，只留一份)
   let doneNames = new Set(filteredRecords.map(r => r.data.name));
-  
-  // 總名單減去已評估，就是未評估
   let pendingNames = orgMembers.filter(m => !doneNames.has(m));
 
-  // 更新數字
   document.getElementById('countDone').textContent = doneNames.size;
   document.getElementById('countPending').textContent = pendingNames.length;
 
-  // 繪製清單
   let doneHtml = Array.from(doneNames).map(name => {
-    // 找出該名單在這次篩選中的第一筆紀錄
     let rec = filteredRecords.find(r => r.data.name === name);
     return `<div class="dash-item done" onclick="loadFromDash('${rec.recordKey}')">
               <span>${name} <small style="color:#888;">(${rec.data.assessDate})</small></span>
@@ -688,7 +683,7 @@ function loadFromDash(key) {
 }
 
 function startNewFromDash(name) {
-  resetForm(false); // 不跳警告直接清空
+  resetForm(false); 
   document.getElementById('nameSelect').value = name;
   closeDashboard();
 }
@@ -729,7 +724,6 @@ function calcBMI(){
   }else{el.textContent='—';el.className='bmi-badge';}
 }
 
-// 自訂輸入顯示切換
 function checkCheekPuff(){ document.getElementById('cheekPuffOther').style.display = document.getElementById('cheekPuff').value === '自行輸入' ? '' : 'none'; }
 function checkTongueFlex(){ document.getElementById('tongueFlexOther').style.display = document.getElementById('tongueFlex').value === '自行輸入' ? '' : 'none'; }
 function checkEat10Remark(){ document.getElementById('eat10RemarkOther').style.display = document.getElementById('eat10Remark').value === '自行輸入' ? '' : 'none'; }
@@ -755,6 +749,7 @@ var msPh={disease:'請選擇疾病史…',eathabit:'請選擇飲食習慣…',di
 var msAddable={disease:true,eathabit:true,overall:true};
 var msPrintId={disease:'print-disease',eathabit:'print-eathabit',diet:'print-diet',overall:'print-overall'};
 
+// 新增：包含刪除按鈕(×)的選單建立功能
 function buildMS(cid,key){
   var wrap=document.getElementById(cid);if(!wrap)return;
   wrap.innerHTML='';
@@ -771,16 +766,36 @@ function buildMS(cid,key){
   wrap.appendChild(trigger);wrap.appendChild(dd);
   var tagsDiv=document.createElement('div');tagsDiv.className='ms-tags';tagsDiv.id='mstags-'+key;wrap.appendChild(tagsDiv);
 }
+
 function rebuildDDItems(dd,key){
   var existingAdd=dd.querySelector('.ms-add-row');
   dd.querySelectorAll('.ms-opt').forEach(function(el){el.remove();});
   msOptions[key].forEach(function(opt,i){
     var item=document.createElement('div');item.className='ms-opt'+(msState[key].has(i)?' sel':'');item.id='mso-'+key+'-'+i;
     var cb='<input type="checkbox" id="mscb-'+key+'-'+i+'"'+(msState[key].has(i)?' checked':'')+' onchange="toggleMSOpt(\''+key+'\','+i+',this.checked)">';
-    item.innerHTML=cb+'<label for="mscb-'+key+'-'+i+'">'+opt+'</label>';
+    var delBtn='<span class="ms-opt-del" title="刪除此選項" onclick="deleteMSOption(\''+key+'\','+i+',event)">×</span>';
+    item.innerHTML=cb+'<label for="mscb-'+key+'-'+i+'" style="flex:1;">'+opt+'</label>' + delBtn;
     if(msAddable[key]&&existingAdd){dd.insertBefore(item,existingAdd);}else{dd.appendChild(item);}
   });
 }
+
+function deleteMSOption(key, index, event) {
+  event.stopPropagation();
+  if(!confirm('確定要刪除「' + msOptions[key][index] + '」這個選項嗎？\n(注意：只會影響後續建立的表單，舊表單不受影響)')) return;
+  msOptions[key].splice(index, 1);
+  var newState = new Set();
+  msState[key].forEach(function(i) {
+    if (i < index) newState.add(i);
+    else if (i > index) newState.add(i - 1);
+  });
+  msState[key] = newState;
+  var dd = document.getElementById('msdd-'+key);
+  rebuildDDItems(dd, key);
+  updateMSTrigger(key);
+  renderTags(key);
+  updatePrintText(key);
+}
+
 function toggleMSOpt(key,i,checked){
   if(checked)msState[key].add(i);else msState[key].delete(i);
   var item=document.getElementById('mso-'+key+'-'+i);if(item)item.classList.toggle('sel',checked);
