@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>飲食質地評估表 </title>
+<title>飲食質地評估表</title>
 
 <script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-auth-compat.js"></script>
@@ -159,7 +159,7 @@ tr:hover td{background:#fafaf8;}
   <select class="org-select" id="orgSelect" onchange="onOrgChange()">
     <option value="">── 請選擇機構 ──</option>
   </select>
-  <div class="sub-title">飲食質地評估表 </div>
+  <div class="sub-title">飲食質地評估表</div>
   <button class="mgr-btn" onclick="openMgr()">⚙ 管理機構與人員</button>
 </div>
 
@@ -210,21 +210,27 @@ tr:hover td{background:#fafaf8;}
   <div class="field-row" style="margin-bottom:12px; background:#fafaf8; padding:8px; border:1px solid #e0e0d8; border-radius:5px;">
     <div class="field">
       <label>鼓頰評估 (臉部肌力與協調)</label>
-      <select id="cheekPuff">
+      <select id="cheekPuff" onchange="checkCheekPuff()">
         <option value="">請選擇</option>
         <option>雙側正常</option>
         <option>單側正常</option>
         <option>無法</option>
+        <option>無法評估</option>
+        <option>自行輸入</option>
       </select>
+      <input type="text" id="cheekPuffOther" style="display:none; margin-top:4px;" placeholder="請自行輸入說明...">
     </div>
     <div class="field">
       <label>舌頭靈活度 (食團形成與後送)</label>
-      <select id="tongueFlex">
+      <select id="tongueFlex" onchange="checkTongueFlex()">
         <option value="">請選擇</option>
         <option>正常 (上下左右移動自如)</option>
         <option>部分受限 (活動範圍小或偏斜)</option>
         <option>無法動作 (無法自主伸出)</option>
+        <option>無法評估</option>
+        <option>自行輸入</option>
       </select>
+      <input type="text" id="tongueFlexOther" style="display:none; margin-top:4px;" placeholder="請自行輸入說明...">
     </div>
   </div>
 
@@ -440,7 +446,7 @@ function currentOrgName() {
 }
 
 // ==========================================
-// 雲端個案存取邏輯 (取代原本的 localStorage)
+// 雲端個案存取邏輯
 // ==========================================
 function renderRecordSelect() {
   var sel = document.getElementById('recordSelect');
@@ -452,7 +458,6 @@ function renderRecordSelect() {
     return;
   }
   
-  // 查詢雲端該機構的所有評估紀錄
   db.collection("records").where("orgId", "==", orgId).get().then(snap => {
     sel.innerHTML = '<option value="">── 選擇雲端儲存個案 ──</option>';
     if (snap.empty) {
@@ -478,7 +483,6 @@ function saveRecord() {
   
   var orgId = currentOrgId();
   var key = name + '（' + (data.assessDate || '無日期') + '）';
-  // 建立在雲端資料庫的唯一文件 ID
   var docId = orgId + "___" + key; 
   
   db.collection("records").doc(docId).set({
@@ -528,7 +532,7 @@ function deleteRecord() {
 }
 
 // ==========================================
-// 介面與功能邏輯 (與舊版相同)
+// 介面與功能邏輯
 // ==========================================
 function renderOrgSelect() {
   var sel = document.getElementById('orgSelect'), cur = sel.value;
@@ -561,6 +565,14 @@ function calcBMI(){
     else if(bmi>=24){cls='bmi-badge bmi-warn';label='過重';}
     el.textContent=b+'（'+label+'）';el.className=cls;
   }else{el.textContent='—';el.className='bmi-badge';}
+}
+
+// 鼓頰與舌頭自訂輸入顯示切換
+function checkCheekPuff(){
+  document.getElementById('cheekPuffOther').style.display = document.getElementById('cheekPuff').value === '自行輸入' ? '' : 'none';
+}
+function checkTongueFlex(){
+  document.getElementById('tongueFlexOther').style.display = document.getElementById('tongueFlex').value === '自行輸入' ? '' : 'none';
 }
 
 var eat10Items=['吞嚥問題讓我的體重減輕','因為吞嚥問題不能在外面用餐','我喝飲料／水很費力','我吃固體食物很費力','我吞藥丸很費力','吞嚥會感覺到痛','因為吞嚥問題不能享受用餐','吞嚥後感覺喉嚨有食物卡著','當我進食的時候會咳嗽','吞嚥讓我感覺緊張有壓力'];
@@ -715,7 +727,7 @@ function batchAddMembers(){if(!mgrActiveOrg){alert('請先選擇機構');return;
 function replaceMembers(){if(!mgrActiveOrg){alert('請先選擇機構');return;}var raw=document.getElementById('batchInput').value;var names=raw.split('\n').map(function(s){return s.trim();}).filter(function(s){return s.length>0;});if(names.length===0){alert('請輸入姓名');return;}if(!confirm('確定取代現有名單？'))return;members[mgrActiveOrg]=names;document.getElementById('batchInput').value='';document.getElementById('batchResult').textContent='已取代為 '+names.length+' 位。';renderMgr();}
 
 function saveMgr(){
-  saveCloudSettings(); // 將變更儲存到 Firebase 雲端
+  saveCloudSettings(); 
   var curOrgId=document.getElementById('orgSelect').value;
   var curName=document.getElementById('nameSelect').value;
   closeMgr();
@@ -751,7 +763,9 @@ function collectFormData(){
     hearing:document.getElementById('hearing').value,
     cognition:document.getElementById('cognition').value,
     cheekPuff:document.getElementById('cheekPuff').value,
+    cheekPuffOther:document.getElementById('cheekPuffOther').value,
     tongueFlex:document.getElementById('tongueFlex').value,
+    tongueFlexOther:document.getElementById('tongueFlexOther').value,
     eat10:eat10Vals,
     teethFunc:document.getElementById('teethFunc').value,
     teethOther:document.getElementById('teethOther').value,
@@ -778,7 +792,11 @@ function applyFormData(d){
   if(d.hearing)document.getElementById('hearing').value=d.hearing;
   if(d.cognition)document.getElementById('cognition').value=d.cognition;
   if(d.cheekPuff)document.getElementById('cheekPuff').value=d.cheekPuff;
+  if(d.cheekPuffOther)document.getElementById('cheekPuffOther').value=d.cheekPuffOther;
+  checkCheekPuff();
   if(d.tongueFlex)document.getElementById('tongueFlex').value=d.tongueFlex;
+  if(d.tongueFlexOther)document.getElementById('tongueFlexOther').value=d.tongueFlexOther;
+  checkTongueFlex();
   if(d.eat10)d.eat10.forEach(function(v,i){var el=document.getElementById('e'+i);if(el)el.value=v;});updateEat10();
   if(d.teethFunc)document.getElementById('teethFunc').value=d.teethFunc;
   if(d.teethOther)document.getElementById('teethOther').value=d.teethOther;checkOtherTeeth();
@@ -807,13 +825,15 @@ function downloadJSON(data,filename){var blob=new Blob([JSON.stringify(data,null
 function resetForm(){
   if(!confirm('確定要清除所有資料重新填寫？'))return;
   document.getElementById('orgSelect').value='';document.getElementById('nameSelect').innerHTML='<option value="">── 請先選擇機構 ──</option>';
-  ['age','height','weight','signature'].forEach(function(id){document.getElementById(id).value='';});
+  ['age','height','weight','signature','cheekPuffOther','tongueFlexOther'].forEach(function(id){document.getElementById(id).value='';});
   ['gender','vision','hearing','cognition','cheekPuff','tongueFlex','teethFunc','dietHabit','mealTime'].forEach(function(id){document.getElementById(id).selectedIndex=0;});
   document.getElementById('bmiDisplay').textContent='—';document.getElementById('bmiDisplay').className='bmi-badge';
   document.getElementById('noteText').value='';
   eat10Items.forEach(function(_,i){document.getElementById('e'+i).selectedIndex=0;});updateEat10();
   chewItems.forEach(function(_,i){document.getElementById('c'+i).selectedIndex=0;});updateChew();
   document.getElementById('teethOtherField').style.display='none';
+  checkCheekPuff();
+  checkTongueFlex();
   ['disease','eathabit','diet','overall'].forEach(function(key){msState[key].clear();buildMS('ms-'+key,key);updatePrintText(key);});
   document.getElementById('assessDate').value=new Date().toISOString().split('T')[0];
   document.getElementById('recordSelect').innerHTML = '<option value="">── 選擇雲端儲存個案 ──</option>';
