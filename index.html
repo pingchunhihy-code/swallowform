@@ -240,7 +240,19 @@ tr:hover td{background:#fafaf8;}
     <tbody id="eat10Body"></tbody>
     <tfoot><tr class="score-row"><td style="text-align:right;padding-right:14px;">總分</td><td style="text-align:center;font-size:14px;"><span id="eat10Total">0</span></td></tr></tfoot>
   </table>
-  <div style="margin-top:5px;"><span id="eat10Status" class="score-badge score-ok">正常範圍</span></div>
+  <div style="margin-top:5px; margin-bottom:8px;"><span id="eat10Status" class="score-badge score-ok">正常範圍</span></div>
+  
+  <div class="field-row" style="margin-top:10px; background:#fafaf8; padding:8px; border:1px solid #e0e0d8; border-radius:5px;">
+    <div class="field">
+      <label>EAT-10 評估備註</label>
+      <select id="eat10Remark" onchange="checkEat10Remark()">
+        <option value="">無</option>
+        <option>無法評估</option>
+        <option>自行輸入</option>
+      </select>
+      <input type="text" id="eat10RemarkOther" style="display:none; margin-top:4px;" placeholder="請自行輸入說明...">
+    </div>
+  </div>
 </div>
 
 <div class="page-break"></div>
@@ -259,7 +271,19 @@ tr:hover td{background:#fafaf8;}
     <tbody id="chewBody"></tbody>
     <tfoot><tr class="score-row"><td style="text-align:right;padding-right:14px;">困難次數</td><td style="text-align:center;font-size:14px;"><span id="chewTotal">0</span></td></tr></tfoot>
   </table>
-  <div style="margin-top:5px;"><span id="chewStatus" class="score-badge score-ok">正常範圍</span></div>
+  <div style="margin-top:5px; margin-bottom:8px;"><span id="chewStatus" class="score-badge score-ok">正常範圍</span></div>
+
+  <div class="field-row" style="margin-top:10px; background:#fafaf8; padding:8px; border:1px solid #e0e0d8; border-radius:5px;">
+    <div class="field">
+      <label>咀嚼能力評估備註</label>
+      <select id="chewRemark" onchange="checkChewRemark()">
+        <option value="">無</option>
+        <option>無法評估</option>
+        <option>自行輸入</option>
+      </select>
+      <input type="text" id="chewRemarkOther" style="display:none; margin-top:4px;" placeholder="請自行輸入說明...">
+    </div>
+  </div>
 </div>
 
 <div class="section">
@@ -380,11 +404,9 @@ const db = firebase.firestore();
 // ==========================================
 auth.onAuthStateChanged(user => {
   if (user) {
-    // 登入成功，隱藏登入畫面，並從雲端讀取機構設定
     document.getElementById('loginOverlay').style.display = 'none';
     loadCloudSettings();
   } else {
-    // 未登入，顯示登入畫面
     document.getElementById('loginOverlay').style.display = 'flex';
   }
 });
@@ -410,7 +432,6 @@ var orgs = [];
 var members = {};
 var mgrActiveOrg = null;
 
-// 從雲端載入「機構與人員」設定檔
 function loadCloudSettings() {
   db.collection("system").doc("settings").get().then(doc => {
     if (doc.exists) {
@@ -418,7 +439,6 @@ function loadCloudSettings() {
       orgs = data.orgs || [];
       members = data.members || {};
     } else {
-      // 第一次使用，給予預設值並存上雲端
       orgs = [{id:'A',name:'預設測試機構'}];
       members = {A:['測試長輩A']};
       saveCloudSettings();
@@ -430,7 +450,6 @@ function loadCloudSettings() {
   });
 }
 
-// 將「機構與人員」設定檔存回雲端
 function saveCloudSettings() {
   db.collection("system").doc("settings").set({
     orgs: orgs,
@@ -465,7 +484,7 @@ function renderRecordSelect() {
     } else {
       var keys = [];
       snap.forEach(doc => { keys.push(doc.data().recordKey); });
-      keys.sort().reverse().forEach(k => { // 反向排序讓最新的在上面
+      keys.sort().reverse().forEach(k => {
         var opt = document.createElement('option'); opt.value = k; opt.textContent = k; sel.appendChild(opt);
       });
       if (cur) sel.value = cur;
@@ -567,13 +586,11 @@ function calcBMI(){
   }else{el.textContent='—';el.className='bmi-badge';}
 }
 
-// 鼓頰與舌頭自訂輸入顯示切換
-function checkCheekPuff(){
-  document.getElementById('cheekPuffOther').style.display = document.getElementById('cheekPuff').value === '自行輸入' ? '' : 'none';
-}
-function checkTongueFlex(){
-  document.getElementById('tongueFlexOther').style.display = document.getElementById('tongueFlex').value === '自行輸入' ? '' : 'none';
-}
+// 自訂輸入顯示切換
+function checkCheekPuff(){ document.getElementById('cheekPuffOther').style.display = document.getElementById('cheekPuff').value === '自行輸入' ? '' : 'none'; }
+function checkTongueFlex(){ document.getElementById('tongueFlexOther').style.display = document.getElementById('tongueFlex').value === '自行輸入' ? '' : 'none'; }
+function checkEat10Remark(){ document.getElementById('eat10RemarkOther').style.display = document.getElementById('eat10Remark').value === '自行輸入' ? '' : 'none'; }
+function checkChewRemark(){ document.getElementById('chewRemarkOther').style.display = document.getElementById('chewRemark').value === '自行輸入' ? '' : 'none'; }
 
 var eat10Items=['吞嚥問題讓我的體重減輕','因為吞嚥問題不能在外面用餐','我喝飲料／水很費力','我吃固體食物很費力','我吞藥丸很費力','吞嚥會感覺到痛','因為吞嚥問題不能享受用餐','吞嚥後感覺喉嚨有食物卡著','當我進食的時候會咳嗽','吞嚥讓我感覺緊張有壓力'];
 (function(){var tbody=document.getElementById('eat10Body');eat10Items.forEach(function(item,i){var tr=document.createElement('tr');tr.innerHTML='<td style="padding-left:10px;">'+item+'</td><td style="text-align:center;"><select id="e'+i+'" onchange="updateEat10()" style="width:100px;"><option value="0">0 沒有</option><option value="1">1 很少</option><option value="2">2 偶爾</option><option value="3">3 經常</option><option value="4">4 總是</option></select></td>';tbody.appendChild(tr);});})();
@@ -766,9 +783,13 @@ function collectFormData(){
     cheekPuffOther:document.getElementById('cheekPuffOther').value,
     tongueFlex:document.getElementById('tongueFlex').value,
     tongueFlexOther:document.getElementById('tongueFlexOther').value,
+    eat10Remark:document.getElementById('eat10Remark').value,
+    eat10RemarkOther:document.getElementById('eat10RemarkOther').value,
     eat10:eat10Vals,
     teethFunc:document.getElementById('teethFunc').value,
     teethOther:document.getElementById('teethOther').value,
+    chewRemark:document.getElementById('chewRemark').value,
+    chewRemarkOther:document.getElementById('chewRemarkOther').value,
     chew:chewVals,
     dietHabit:document.getElementById('dietHabit').value,
     mealTime:document.getElementById('mealTime').value,
@@ -791,21 +812,33 @@ function applyFormData(d){
   if(d.vision)document.getElementById('vision').value=d.vision;
   if(d.hearing)document.getElementById('hearing').value=d.hearing;
   if(d.cognition)document.getElementById('cognition').value=d.cognition;
+  
   if(d.cheekPuff)document.getElementById('cheekPuff').value=d.cheekPuff;
   if(d.cheekPuffOther)document.getElementById('cheekPuffOther').value=d.cheekPuffOther;
   checkCheekPuff();
   if(d.tongueFlex)document.getElementById('tongueFlex').value=d.tongueFlex;
   if(d.tongueFlexOther)document.getElementById('tongueFlexOther').value=d.tongueFlexOther;
   checkTongueFlex();
+  
+  if(d.eat10Remark)document.getElementById('eat10Remark').value=d.eat10Remark;
+  if(d.eat10RemarkOther)document.getElementById('eat10RemarkOther').value=d.eat10RemarkOther;
+  checkEat10Remark();
   if(d.eat10)d.eat10.forEach(function(v,i){var el=document.getElementById('e'+i);if(el)el.value=v;});updateEat10();
+  
   if(d.teethFunc)document.getElementById('teethFunc').value=d.teethFunc;
   if(d.teethOther)document.getElementById('teethOther').value=d.teethOther;checkOtherTeeth();
+  
+  if(d.chewRemark)document.getElementById('chewRemark').value=d.chewRemark;
+  if(d.chewRemarkOther)document.getElementById('chewRemarkOther').value=d.chewRemarkOther;
+  checkChewRemark();
   if(d.chew)d.chew.forEach(function(v,i){var el=document.getElementById('c'+i);if(el)el.value=v;});updateChew();
+  
   if(d.dietHabit)document.getElementById('dietHabit').value=d.dietHabit;
   if(d.mealTime)document.getElementById('mealTime').value=d.mealTime;
   if(d.noteText)document.getElementById('noteText').value=d.noteText;
   if(d.signature)document.getElementById('signature').value=d.signature;
   if(d.assessDate)document.getElementById('assessDate').value=d.assessDate;
+  
   ['disease','eathabit','diet','overall'].forEach(function(k){
     if(d.msOpts&&d.msOpts[k])msOptions[k]=d.msOpts[k];
     msState[k].clear();buildMS('ms-'+k,k);
@@ -825,15 +858,22 @@ function downloadJSON(data,filename){var blob=new Blob([JSON.stringify(data,null
 function resetForm(){
   if(!confirm('確定要清除所有資料重新填寫？'))return;
   document.getElementById('orgSelect').value='';document.getElementById('nameSelect').innerHTML='<option value="">── 請先選擇機構 ──</option>';
-  ['age','height','weight','signature','cheekPuffOther','tongueFlexOther'].forEach(function(id){document.getElementById(id).value='';});
-  ['gender','vision','hearing','cognition','cheekPuff','tongueFlex','teethFunc','dietHabit','mealTime'].forEach(function(id){document.getElementById(id).selectedIndex=0;});
+  
+  ['age','height','weight','signature','cheekPuffOther','tongueFlexOther','eat10RemarkOther','chewRemarkOther'].forEach(function(id){document.getElementById(id).value='';});
+  ['gender','vision','hearing','cognition','cheekPuff','tongueFlex','eat10Remark','chewRemark','teethFunc','dietHabit','mealTime'].forEach(function(id){document.getElementById(id).selectedIndex=0;});
+  
   document.getElementById('bmiDisplay').textContent='—';document.getElementById('bmiDisplay').className='bmi-badge';
   document.getElementById('noteText').value='';
+  
   eat10Items.forEach(function(_,i){document.getElementById('e'+i).selectedIndex=0;});updateEat10();
   chewItems.forEach(function(_,i){document.getElementById('c'+i).selectedIndex=0;});updateChew();
   document.getElementById('teethOtherField').style.display='none';
+  
   checkCheekPuff();
   checkTongueFlex();
+  checkEat10Remark();
+  checkChewRemark();
+  
   ['disease','eathabit','diet','overall'].forEach(function(key){msState[key].clear();buildMS('ms-'+key,key);updatePrintText(key);});
   document.getElementById('assessDate').value=new Date().toISOString().split('T')[0];
   document.getElementById('recordSelect').innerHTML = '<option value="">── 選擇雲端儲存個案 ──</option>';
