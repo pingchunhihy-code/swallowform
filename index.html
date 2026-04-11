@@ -55,9 +55,15 @@ tr:hover td{background:#fafaf8;}
 .ms-opt.sel{background:#E6F1FB;}
 .ms-opt input{width:14px;height:14px;flex-shrink:0;margin-top:2px;}
 .ms-opt label{font-size:12px;cursor:pointer;line-height:1.5;}
-/* 刪除按鈕 CSS */
-.ms-opt-del{margin-left:auto; color:#ccc; font-size:18px; line-height:1; padding-left:8px; user-select:none;}
+
+/* 新增排序與刪除按鈕 CSS */
+.ms-opt-ctrls{display:flex; gap:8px; margin-left:auto; align-items:center; padding-left:8px;}
+.ms-opt-move{color:#bbb; cursor:pointer; font-size:14px; user-select:none; font-weight:bold; line-height:1;}
+.ms-opt-move:hover{color:#185FA5;}
+.ms-opt-move.disabled{color:#eee; cursor:default;}
+.ms-opt-del{color:#ccc; font-size:18px; line-height:1; cursor:pointer; user-select:none;}
 .ms-opt-del:hover{color:#A32D2D;}
+
 .ms-add-row{display:flex;gap:6px;padding:7px 10px;border-top:1px solid #e8e8e8;background:#fafaf8;position:sticky;bottom:0;}
 .ms-add-row input{flex:1;font-size:12px;padding:4px 7px;}
 .ms-add-btn{background:#E6F1FB;border:1px solid #85B7EB;color:#185FA5;border-radius:5px;padding:4px 10px;font-size:11px;cursor:pointer;white-space:nowrap;}
@@ -195,7 +201,7 @@ tr:hover td{background:#fafaf8;}
 <div class="section">
   <div class="section-title">一、基本資料</div>
   <div class="field-row">
-    <div class="field"><label>姓名</label><select id="nameSelect"><option value="">── 請先選擇機構 ──</option></select></div>
+    <div class="field"><label>姓名</label><select id="nameSelect" onchange="onNameChange()"><option value="">── 請先選擇機構 ──</option></select></div>
     <div class="field"><label>性別</label><select id="gender"><option>男</option><option>女</option></select></div>
     <div class="field"><label>年齡</label><input type="number" id="age" placeholder="歲" min="0" max="120"></div>
   </div>
@@ -307,7 +313,7 @@ tr:hover td{background:#fafaf8;}
       <select id="dietHabit"><option value="">請選擇</option><option>軟質</option><option>細碎乾飯</option><option>細碎稀飯</option><option>半流質</option><option>細泥飲食</option><option>素食乾飯</option><option>素食稀飯</option></select>
     </div>
     <div class="field"><label>平均用餐時間</label>
-      <select id="mealTime"><option value="">請选择</option><option>15分鐘以內</option><option>15–30分鐘</option><option>30分鐘以上</option></select>
+      <select id="mealTime"><option value="">請選擇</option><option>15分鐘以內</option><option>15–30分鐘</option><option>30分鐘以上</option></select>
     </div>
   </div>
   <div class="field-row" style="margin-bottom:0;">
@@ -489,6 +495,14 @@ function loadCloudSettings() {
       var data = doc.data();
       orgs = data.orgs || [];
       members = data.members || {};
+      if(data.msOptions) {
+         msOptions = data.msOptions;
+         // 依照雲端選項重新建立選單
+         ['disease','eathabit','diet','overall'].forEach(function(k){
+            buildMS('ms-'+k,k);
+            updatePrintText(k);
+         });
+      }
     } else {
       orgs = [{id:'A',name:'預設測試機構'}];
       members = {A:['測試長輩A']};
@@ -502,8 +516,11 @@ function loadCloudSettings() {
 }
 
 function saveCloudSettings() {
-  db.collection("system").doc("settings").set({ orgs: orgs, members: members })
-    .catch(e => console.error("儲存設定失敗", e));
+  db.collection("system").doc("settings").set({ 
+    orgs: orgs, 
+    members: members,
+    msOptions: msOptions // 新增儲存自訂選項與排序
+  }).catch(e => console.error("儲存設定失敗", e));
 }
 
 function currentOrgId() { return document.getElementById('orgSelect').value || '__none__'; }
@@ -519,7 +536,7 @@ function currentOrgName() {
 function renderRecordSelect() {
   var sel = document.getElementById('recordSelect');
   var cur = sel.value;
-  sel.innerHTML = '<option value="">── 選擇雲端儲存個案 ──</option>';
+  sel.innerHTML = '<option value="">── 讀取雲端資料中... ──</option>';
   var orgId = currentOrgId();
   if (!orgId || orgId === '__none__') {
     sel.innerHTML = '<option value="">── 選擇雲端儲存個案 ──</option>';
@@ -570,10 +587,9 @@ function saveRecord() {
   }).catch(err => { alert("儲存失敗：" + err.message); });
 }
 
-// 變更點：下拉選單改變時，自動執行此函數
 function loadRecord() {
   var key = document.getElementById('recordSelect').value;
-  if (!key) return; // 選擇空選項時直接返回，不跳警告
+  if (!key) return; 
   
   var orgId = currentOrgId();
   var docId = orgId + "___" + key;
@@ -581,7 +597,6 @@ function loadRecord() {
   db.collection("records").doc(docId).get().then(doc => {
     if (doc.exists) {
       applyFormData(doc.data().data);
-      // 移除載入成功的 alert，讓自動載入更順暢不打擾
     } else {
       alert('在雲端找不到此個案');
     }
@@ -600,6 +615,33 @@ function deleteRecord() {
     resetForm();
     alert("🗑️ 已從雲端永久刪除");
   }).catch(err => alert("刪除失敗：" + err.message));
+}
+
+// 新增：切換姓名時自動清空表單，但保留身分
+function onNameChange() {
+  var n = document.getElementById('nameSelect').value;
+  if (!n) return; // 如果選回空白就忽略
+  clearFormKeepIdentity();
+}
+
+function clearFormKeepIdentity(){
+  // 清空各項數值
+  ['age','height','weight','signature','cheekPuffOther','tongueFlexOther','eat10RemarkOther','chewRemarkOther'].forEach(function(id){document.getElementById(id).value='';});
+  ['gender','vision','hearing','cognition','cheekPuff','tongueFlex','eat10Remark','chewRemark','teethFunc','dietHabit','mealTime'].forEach(function(id){document.getElementById(id).selectedIndex=0;});
+  
+  document.getElementById('bmiDisplay').textContent='—';document.getElementById('bmiDisplay').className='bmi-badge';
+  document.getElementById('noteText').value='';
+  
+  eat10Items.forEach(function(_,i){document.getElementById('e'+i).selectedIndex=0;});updateEat10();
+  chewItems.forEach(function(_,i){document.getElementById('c'+i).selectedIndex=0;});updateChew();
+  document.getElementById('teethOtherField').style.display='none';
+  
+  checkCheekPuff(); checkTongueFlex(); checkEat10Remark(); checkChewRemark();
+  
+  ['disease','eathabit','diet','overall'].forEach(function(key){msState[key].clear();buildMS('ms-'+key,key);updatePrintText(key);});
+  
+  // 清空雲端選單狀態，表示這是一筆新紀錄
+  document.getElementById('recordSelect').value = '';
 }
 
 // ==========================================
@@ -767,16 +809,51 @@ function buildMS(cid,key){
   var tagsDiv=document.createElement('div');tagsDiv.className='ms-tags';tagsDiv.id='mstags-'+key;wrap.appendChild(tagsDiv);
 }
 
+// 變更點：加入排序(上下)與刪除的控制按鈕
 function rebuildDDItems(dd,key){
   var existingAdd=dd.querySelector('.ms-add-row');
   dd.querySelectorAll('.ms-opt').forEach(function(el){el.remove();});
   msOptions[key].forEach(function(opt,i){
     var item=document.createElement('div');item.className='ms-opt'+(msState[key].has(i)?' sel':'');item.id='mso-'+key+'-'+i;
     var cb='<input type="checkbox" id="mscb-'+key+'-'+i+'"'+(msState[key].has(i)?' checked':'')+' onchange="toggleMSOpt(\''+key+'\','+i+',this.checked)">';
-    var delBtn='<span class="ms-opt-del" title="刪除此選項" onclick="deleteMSOption(\''+key+'\','+i+',event)">×</span>';
-    item.innerHTML=cb+'<label for="mscb-'+key+'-'+i+'" style="flex:1;">'+opt+'</label>' + delBtn;
+    
+    var moveUp = i > 0 ? '<span class="ms-opt-move" title="上移" onclick="moveMSOption(\''+key+'\','+i+',-1,event)">↑</span>' : '<span class="ms-opt-move disabled">↑</span>';
+    var moveDown = i < msOptions[key].length - 1 ? '<span class="ms-opt-move" title="下移" onclick="moveMSOption(\''+key+'\','+i+',1,event)">↓</span>' : '<span class="ms-opt-move disabled">↓</span>';
+    var delBtn = '<span class="ms-opt-del" title="刪除選項" onclick="deleteMSOption(\''+key+'\','+i+',event)">×</span>';
+    
+    var ctrls = '<div class="ms-opt-ctrls">' + moveUp + moveDown + delBtn + '</div>';
+    
+    item.innerHTML=cb+'<label for="mscb-'+key+'-'+i+'" style="flex:1; cursor:pointer;">'+opt+'</label>' + ctrls;
     if(msAddable[key]&&existingAdd){dd.insertBefore(item,existingAdd);}else{dd.appendChild(item);}
   });
+}
+
+// 排序選項功能
+function moveMSOption(key, index, dir, event) {
+  event.stopPropagation();
+  if(dir === -1 && index === 0) return;
+  if(dir === 1 && index === msOptions[key].length - 1) return;
+
+  var newIndex = index + dir;
+  var temp = msOptions[key][index];
+  msOptions[key][index] = msOptions[key][newIndex];
+  msOptions[key][newIndex] = temp;
+
+  var newState = new Set();
+  msState[key].forEach(function(val) {
+    if(val === index) newState.add(newIndex);
+    else if(val === newIndex) newState.add(index);
+    else newState.add(val);
+  });
+  msState[key] = newState;
+
+  var dd = document.getElementById('msdd-'+key);
+  rebuildDDItems(dd, key);
+  updateMSTrigger(key);
+  renderTags(key);
+  updatePrintText(key);
+  
+  saveCloudSettings(); // 同步儲存排序到雲端
 }
 
 function deleteMSOption(key, index, event) {
@@ -794,6 +871,7 @@ function deleteMSOption(key, index, event) {
   updateMSTrigger(key);
   renderTags(key);
   updatePrintText(key);
+  saveCloudSettings(); // 同步刪除結果到雲端
 }
 
 function toggleMSOpt(key,i,checked){
@@ -801,6 +879,7 @@ function toggleMSOpt(key,i,checked){
   var item=document.getElementById('mso-'+key+'-'+i);if(item)item.classList.toggle('sel',checked);
   updateMSTrigger(key);renderTags(key);updatePrintText(key);
 }
+
 function addMSOption(key){
   var inp=document.getElementById('msadd-'+key);
   var val=inp.value.trim();if(!val)return;
@@ -810,7 +889,9 @@ function addMSOption(key){
   var dd=document.getElementById('msdd-'+key);rebuildDDItems(dd,key);
   updateMSTrigger(key);renderTags(key);updatePrintText(key);
   inp.value='';
+  saveCloudSettings(); // 同步新增選項到雲端
 }
+
 function toggleMS(key){
   var dd=document.getElementById('msdd-'+key),tr=document.getElementById('mst-'+key),ar=document.getElementById('msa-'+key);
   var isOpen=dd.classList.contains('open');
@@ -1013,8 +1094,8 @@ function applyFormData(d){
 function exportJSON(){var data=collectFormData();var name=(data.name||'未命名')+'_評估表_'+(data.assessDate||new Date().toISOString().split('T')[0]);downloadJSON(data,name+'.json');}
 function downloadJSON(data,filename){var blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename;document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(a.href);}
 
-function resetForm(){
-  if(!confirm('確定要清除所有資料重新填寫？')) return;
+function resetForm(askConfirm = true){
+  if(askConfirm && !confirm('確定要清除所有資料重新填寫？')) return;
   document.getElementById('orgSelect').value='';document.getElementById('nameSelect').innerHTML='<option value="">── 請先選擇機構 ──</option>';
   
   ['age','height','weight','signature','cheekPuffOther','tongueFlexOther','eat10RemarkOther','chewRemarkOther'].forEach(function(id){document.getElementById(id).value='';});
