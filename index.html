@@ -548,9 +548,14 @@ function loadCloudSettings() {
       var data = doc.data();
       orgs = data.orgs || [];
       members = data.members || {};
+      
+      // 修復防呆：確保 msOptions 載入時即使有缺漏也不會報錯當機
       if(data.msOptions) {
-         msOptions = data.msOptions;
          ['disease','eathabit','diet','overall'].forEach(function(k){
+            if(data.msOptions[k]) {
+               // 將 Firestore 儲存的格式轉回純陣列
+               msOptions[k] = Array.isArray(data.msOptions[k]) ? data.msOptions[k] : Object.values(data.msOptions[k]);
+            }
             buildMS('ms-'+k,k);
             updatePrintText(k);
          });
@@ -563,7 +568,7 @@ function loadCloudSettings() {
     renderOrgSelect();
   }).catch(e => {
     console.error("載入設定失敗", e);
-    alert("無法連線至雲端載入機構設定");
+    alert("載入失敗 (" + e.message + ")\n\n💡 建議：請點擊網頁左上角的「登出」，然後重新登入，即可恢復正常連線！");
   });
 }
 
@@ -690,7 +695,7 @@ function clearFormKeepIdentity(){
 }
 
 // ==========================================
-// 🖨️ 批次列印 PDF 邏輯 (全面防 Bug 修正版)
+// 🖨️ 批次列印 PDF 邏輯 (修復連點與瀏覽器繪圖卡死問題)
 // ==========================================
 function openPrintModal() {
   let orgId = currentOrgId();
@@ -736,13 +741,13 @@ function doBatchPrint() {
   let selectedKeys = Array.from(document.querySelectorAll('.print-cb:checked')).map(cb => cb.value);
   if(selectedKeys.length === 0) return alert("請勾選至少一筆資料");
   
-  // UI 提示正在處理
+  // 避免重複點擊，並給予視覺提示
   let btn = document.querySelector('#printOverlay .print-btn:last-child');
   let originalText = btn.textContent;
   btn.textContent = "⏳ 處理中，請稍候...";
   btn.disabled = true;
 
-  // 使用 setTimeout 讓瀏覽器有時間更新「處理中」的按鈕文字
+  // 使用 setTimeout 讓瀏覽器有喘息時間來更新上面的「處理中」按鈕
   setTimeout(() => {
       closePrintModal();
       btn.textContent = originalText;
@@ -763,12 +768,12 @@ function doBatchPrint() {
           let rec = allCurrentOrgRecords.find(r => r.recordKey === key);
           if(rec) {
               resetForm(false);
-              // 使用 isBatchPrint = true 避免觸發不必要的資料庫重新讀取
+              // 帶入 true 表示這是批次列印，不要觸發雲端查詢
               applyFormDataSync(rec.data, true);
               updateAllPrintText();
               
               let clone = document.getElementById('mainFormWrap').cloneNode(true);
-              clone.id = ''; 
+              clone.id = 'print_clone_' + i; 
               clone.style.display = 'block';
               
               let oSel = document.getElementById('mainFormWrap').querySelectorAll('select');
@@ -782,13 +787,13 @@ function doBatchPrint() {
                    else cInp[idx].value = inp.value;
               });
               
-              clone.querySelectorAll('.btn-row, .records-bar, .form-header button').forEach(b => b.remove());
+              clone.querySelectorAll('.btn-row, .records-bar, .form-header button, .overlay').forEach(b => b.remove());
               
               printArea.appendChild(clone);
           }
       }
       
-      // 延遲 0.8 秒，確保瀏覽器完全把多頁的 DOM 畫好，才開啟列印對話框
+      // 再給予 0.5 秒的延遲，讓瀏覽器有時間把剛剛產生的大量 HTML 給畫出來，再呼叫列印
       setTimeout(() => {
           window.print();
           
@@ -798,7 +803,7 @@ function doBatchPrint() {
           
           if(backupOrg) {
               document.getElementById('orgSelect').value = backupOrg;
-              // 直接恢復姓名清單
+              // 恢復姓名選單
               var sel = document.getElementById('nameSelect');
               sel.innerHTML = '<option value="">── 請選擇姓名 ──</option>';
               (members[backupOrg] || []).forEach(n => { var o = document.createElement('option'); o.value = n; o.textContent = n; sel.appendChild(o); });
@@ -806,9 +811,8 @@ function doBatchPrint() {
           applyFormDataSync(backupData, true);
           document.getElementById('recordSelect').value = backupRec;
           
-          // 最後背景更新雲端檔案清單
-          renderRecordSelect();
-      }, 800);
+          renderRecordSelect(); // 背景更新一次雲端檔案清單
+      }, 500);
 
   }, 100);
 }
@@ -870,7 +874,292 @@ async function doTransfer() {
 }
 
 // ==========================================
-// 表單資料收集與全同步載入邏輯
+// 📊 評估進度 Dashboard 邏輯
+// ==========================================
+function openDashboard() {
+  let orgId = currentOrgId();
+  if(!orgId || orgId === '__none__') return alert("請先在左上角選擇機構，才能查看進度總覽。");
+  
+  document.getElementById('dashOrgName').textContent = currentOrgName().replace(/（.*?）/g, '');
+  
+  let ySel = document.getElementById('filterYear');
+  if(ySel.options.length === 0) {
+    let curY = new Date().getFullYear();
+    for(let y = curY - 2; y <= curY + 2; y++) {
+      ySel.add(new Option(y + "年", y));
+    }
+    ySel.value = curY;
+  }
+  
+  document.getElementById('dashOverlay').classList.add('show');
+  
+  db.collection("records").where("orgId", "==", orgId).get().then(snap => {
+    allCurrentOrgRecords = [];
+    snap.forEach(doc => allCurrentOrgRecords.push(doc.data()));
+    renderDashboard();
+  });
+}
+
+function closeDashboard() { document.getElementById('dashOverlay').classList.remove('show'); }
+
+function renderDashboard() {
+  let year = document.getElementById('filterYear').value;
+  let period = document.getElementById('filterPeriod').value;
+  let orgMembers = members[currentOrgId()] || [];
+
+  let filteredRecords = allCurrentOrgRecords.filter(r => {
+    if(!r.data || !r.data.assessDate) return false;
+    let d = new Date(r.data.assessDate);
+    let rY = d.getFullYear().toString();
+    let rM = d.getMonth() + 1; 
+
+    if(rY !== year) return false;
+    if(period === 'ALL') return true;
+    if(period === 'Q1') return rM >= 1 && rM <= 3;
+    if(period === 'Q2') return rM >= 4 && rM <= 6;
+    if(period === 'Q3') return rM >= 7 && rM <= 9;
+    if(period === 'Q4') return rM >= 10 && rM <= 12;
+    if(period.startsWith('M')) return rM.toString() === period.substring(1);
+    return false;
+  });
+
+  let doneNames = new Set(filteredRecords.map(r => r.data.name));
+  let pendingNames = orgMembers.filter(m => !doneNames.has(m));
+
+  document.getElementById('countDone').textContent = doneNames.size;
+  document.getElementById('countPending').textContent = pendingNames.length;
+
+  let doneHtml = Array.from(doneNames).map(name => {
+    let rec = filteredRecords.find(r => r.data.name === name);
+    return `<div class="dash-item done" onclick="loadFromDash('${rec.recordKey}')">
+              <span>${name} <small style="color:#888;">(${rec.data.assessDate})</small></span>
+              <button class="dash-action-btn">查看資料</button>
+            </div>`;
+  }).join('');
+
+  let pendingHtml = pendingNames.map(name => {
+    return `<div class="dash-item pending">
+              <span>${name}</span>
+              <button class="dash-action-btn" onclick="startNewFromDash('${name}')">快速建立</button>
+            </div>`;
+  }).join('');
+
+  document.getElementById('listDone').innerHTML = doneHtml || '<div style="color:#999; font-size:12px; padding:10px;">（此期間無紀錄）</div>';
+  document.getElementById('listPending').innerHTML = pendingHtml || '<div style="color:#085041; font-size:12px; padding:10px; font-weight:bold;">🎉 全數完成評估！</div>';
+}
+
+function loadFromDash(key) {
+  document.getElementById('recordSelect').value = key;
+  loadRecord();
+  closeDashboard();
+}
+
+function startNewFromDash(name) {
+  document.getElementById('nameSelect').value = name;
+  clearFormKeepIdentity(); 
+  closeDashboard();
+  window.scrollTo({ top: 0, behavior: 'smooth' }); 
+}
+
+// ==========================================
+// 介面與功能邏輯
+// ==========================================
+function renderOrgSelect() {
+  var sel = document.getElementById('orgSelect'), cur = sel.value;
+  sel.innerHTML = '<option value="">── 請選擇機構 ──</option>';
+  orgs.forEach(o => { var opt = document.createElement('option'); opt.value = o.id; opt.textContent = o.name; sel.appendChild(opt); });
+  if (cur) sel.value = cur;
+}
+
+function onOrgChange() {
+  var orgId = document.getElementById('orgSelect').value, sel = document.getElementById('nameSelect');
+  sel.innerHTML = '<option value="">── 請選擇姓名 ──</option>';
+  if (!orgId) {
+    var lbl = document.getElementById('recOrgLabel'); if (lbl) lbl.textContent = '請先選擇機構';
+    document.getElementById('recordSelect').innerHTML = '<option value="">── 選擇雲端儲存個案 ──</option>';
+    return;
+  }
+  (members[orgId] || []).forEach(n => { var o = document.createElement('option'); o.value = n; o.textContent = n; sel.appendChild(o); });
+  
+  var found = orgs.find(o => o.id === orgId);
+  var lbl = document.getElementById('recOrgLabel');
+  if (lbl && found) { lbl.textContent = '目前機構：' + found.name.replace(/（.*?）/g, '').trim(); }
+  renderRecordSelect();
+}
+
+function calcBMI(){
+  var h=parseFloat(document.getElementById('height').value),w=parseFloat(document.getElementById('weight').value),el=document.getElementById('bmiDisplay');
+  if(h>0&&w>0){var bmi=w/((h/100)*(h/100)),b=bmi.toFixed(1),cls='bmi-badge',label='正常';
+    if(bmi<18.5){cls='bmi-badge bmi-warn';label='體重過輕';}
+    else if(bmi>=27){cls='bmi-badge bmi-danger';label='體重過重';}
+    else if(bmi>=24){cls='bmi-badge bmi-warn';label='過重';}
+    el.textContent=b+'（'+label+'）';el.className=cls;
+  }else{el.textContent='—';el.className='bmi-badge';}
+}
+
+function checkCheekPuff(){ document.getElementById('cheekPuffOther').style.display = document.getElementById('cheekPuff').value === '自行輸入' ? '' : 'none'; }
+function checkTongueFlex(){ document.getElementById('tongueFlexOther').style.display = document.getElementById('tongueFlex').value === '自行輸入' ? '' : 'none'; }
+function checkEat10Remark(){ document.getElementById('eat10RemarkOther').style.display = document.getElementById('eat10Remark').value === '自行輸入' ? '' : 'none'; }
+function checkChewRemark(){ document.getElementById('chewRemarkOther').style.display = document.getElementById('chewRemark').value === '自行輸入' ? '' : 'none'; }
+
+var eat10Items=['吞嚥問題讓我的體重減輕','因為吞嚥問題不能在外面用餐','我喝飲料／水很費力','我吃固體食物很費力','我吞藥丸很費力','吞嚥會感覺到痛','因為吞嚥問題不能享受用餐','吞嚥後感覺喉嚨有食物卡著','當我進食的時候會咳嗽','吞嚥讓我感覺緊張有壓力'];
+(function(){var tbody=document.getElementById('eat10Body');eat10Items.forEach(function(item,i){var tr=document.createElement('tr');tr.innerHTML='<td style="padding-left:10px;">'+item+'</td><td style="text-align:center;"><select id="e'+i+'" onchange="updateEat10()" style="width:100px;"><option value="0">0 沒有</option><option value="1">1 很少</option><option value="2">2 偶爾</option><option value="3">3 經常</option><option value="4">4 總是</option></select></td>';tbody.appendChild(tr);});})();
+function updateEat10(){var t=0;eat10Items.forEach(function(_,i){t+=parseInt(document.getElementById('e'+i).value);});document.getElementById('eat10Total').textContent=t;var s=document.getElementById('eat10Status');if(t>=3){s.textContent='注意：可能有吞嚥障礙風險（總分 '+t+' 分）';s.className='score-badge score-warn';}else{s.textContent='正常範圍（總分 '+t+' 分）';s.className='score-badge score-ok';}}
+
+var chewItems=['硬豆干','炒花生','芭樂（整顆）','炸雞','水煮玉米（整枝）','蘋果／梨子／蓮霧／芭樂（切片）','烤魷魚／雞胗','水煮花枝／滷豬耳朵','柳丁（切片）','竹筍／敏豆／花椰菜／切片小黃瓜','煮熟的紅／白蘿蔔'];
+(function(){var tbody=document.getElementById('chewBody');chewItems.forEach(function(item,i){var tr=document.createElement('tr');tr.innerHTML='<td style="padding-left:10px;">'+item+'</td><td style="text-align:center;"><select id="c'+i+'" onchange="updateChew()" style="width:108px;"><option value="0">容易吃</option><option value="1">有些吃力</option><option value="1">沒辦法吃</option></select></td>';tbody.appendChild(tr);});})();
+function updateChew(){var t=0;chewItems.forEach(function(_,i){if(parseInt(document.getElementById('c'+i).value)>0)t++;});document.getElementById('chewTotal').textContent=t;var s=document.getElementById('chewStatus');if(t>=4){s.textContent='注意：可能有咀嚼障礙風險（'+t+' 種困難）';s.className='score-badge score-warn';}else{s.textContent='正常範圍（'+t+' 種困難）';s.className='score-badge score-ok';}}
+function checkOtherTeeth(){document.getElementById('teethOtherField').style.display=document.getElementById('teethFunc').value==='其他'?'':'none';}
+
+var msOptions={
+  disease:['糖尿病','高血壓','高血脂','心臟病','中風','慢性腎臟病（CKD）','失智症','骨質疏鬆','帕金森氏症','慢性阻塞性肺病（COPD）','癌症','貧血','肝硬化','憂鬱症'],
+  eathabit:['湯多','菜多','飯多','淋肉湯','海鮮過敏','素食','無'],
+  diet:['牙齒完整或部分功能，舌頭功能正常，建議軟質飲食（避免太硬、菜梗切小段）。','牙齒缺牙或無牙但舌頭正常或尚可，建議細碎飲食（大小約1.5cm丁狀）。','牙齒缺牙或無牙但舌頭正常或尚可，建議細碎（稀飯）飲食（大小約1.5cm丁狀）。','無牙、咀嚼困難但舌頭功能尚可，建議半流質飲食（鹹粥狀）。','對細碎食物有嗆咳或異物感／含水量高食物有嗆咳，建議細泥飲食。'],
+  overall:['依飲食質地建議給予，持續定期追蹤。','鼓勵持續參與中心活動以維持肌力與活動量。','建議每日飲水目標設定為1500–2000cc，並鼓勵參與活動後補充水分。','體重過重：BMI指數偏高，建議增加日間活動量，宜控制澱粉與精製糖攝取量。','體重過輕／肌少症風險，建議採高蛋白高熱量飲食原則，正餐之間增加豆漿或營養品作為點心。','食慾不佳：建議採少量多餐方式，並鼓勵長輩自主進食以增加成就感。','中風／喝水易嗆：建議使用食物增稠劑將液體調整至適合稠度，並採收下巴姿勢進食。','進食速度過快：已衛教使用小湯匙進食，並提醒每口充分咀嚼吞嚥後再進食下一口。','建議改用斜口杯或單向吸管控制流速，避免過多水量。','每日持續執行餐前健口操，加強舌部靈活度與咽喉肌群力量，降低誤嚥風險。']
+};
+var msState={disease:new Set(),eathabit:new Set(),diet:new Set(),overall:new Set()};
+var msPh={disease:'請選擇疾病史…',eathabit:'請選擇飲食習慣…',diet:'請選擇飲食建議項目…',overall:'請選擇綜合評估項目…'};
+var msAddable={disease:true,eathabit:true,overall:true};
+var msPrintId={disease:'print-disease',eathabit:'print-eathabit',diet:'print-diet',overall:'print-overall'};
+
+function buildMS(cid,key){
+  var wrap=document.getElementById(cid);if(!wrap)return;
+  wrap.innerHTML='';
+  var trigger=document.createElement('div');trigger.className='ms-trigger';trigger.id='mst-'+key;
+  trigger.innerHTML='<span class="ms-trigger-text" id="mstt-'+key+'">'+msPh[key]+'</span><span class="ms-arrow" id="msa-'+key+'">▼</span>';
+  trigger.onclick=function(){toggleMS(key);};
+  var dd=document.createElement('div');dd.className='ms-dd';dd.id='msdd-'+key;
+  rebuildDDItems(dd,key);
+  if(msAddable[key]){
+    var addRow=document.createElement('div');addRow.className='ms-add-row';
+    addRow.innerHTML='<input type="text" id="msadd-'+key+'" placeholder="新增選項…"><button class="ms-add-btn" onclick="addMSOption(\''+key+'\')">新增</button>';
+    dd.appendChild(addRow);
+  }
+  wrap.appendChild(trigger);wrap.appendChild(dd);
+  var tagsDiv=document.createElement('div');tagsDiv.className='ms-tags';tagsDiv.id='mstags-'+key;wrap.appendChild(tagsDiv);
+}
+
+function rebuildDDItems(dd,key){
+  var existingAdd=dd.querySelector('.ms-add-row');
+  dd.querySelectorAll('.ms-opt').forEach(function(el){el.remove();});
+  msOptions[key].forEach(function(opt,i){
+    var item=document.createElement('div');item.className='ms-opt'+(msState[key].has(i)?' sel':'');item.id='mso-'+key+'-'+i;
+    var cb='<input type="checkbox" id="mscb-'+key+'-'+i+'"'+(msState[key].has(i)?' checked':'')+' onchange="toggleMSOpt(\''+key+'\','+i+',this.checked)">';
+    
+    var moveUp = i > 0 ? '<span class="ms-opt-move" title="上移" onclick="moveMSOption(\''+key+'\','+i+',-1,event)">↑</span>' : '<span class="ms-opt-move disabled">↑</span>';
+    var moveDown = i < msOptions[key].length - 1 ? '<span class="ms-opt-move" title="下移" onclick="moveMSOption(\''+key+'\','+i+',1,event)">↓</span>' : '<span class="ms-opt-move disabled">↓</span>';
+    var delBtn = '<span class="ms-opt-del" title="刪除選項" onclick="deleteMSOption(\''+key+'\','+i+',event)">×</span>';
+    
+    var ctrls = '<div class="ms-opt-ctrls">' + moveUp + moveDown + delBtn + '</div>';
+    
+    item.innerHTML=cb+'<label for="mscb-'+key+'-'+i+'" style="flex:1; cursor:pointer;">'+opt+'</label>' + ctrls;
+    if(msAddable[key]&&existingAdd){dd.insertBefore(item,existingAdd);}else{dd.appendChild(item);}
+  });
+}
+
+function moveMSOption(key, index, dir, event) {
+  event.stopPropagation();
+  if(dir === -1 && index === 0) return;
+  if(dir === 1 && index === msOptions[key].length - 1) return;
+
+  var newIndex = index + dir;
+  var temp = msOptions[key][index];
+  msOptions[key][index] = msOptions[key][newIndex];
+  msOptions[key][newIndex] = temp;
+
+  var newState = new Set();
+  msState[key].forEach(function(val) {
+    if(val === index) newState.add(newIndex);
+    else if(val === newIndex) newState.add(index);
+    else newState.add(val);
+  });
+  msState[key] = newState;
+
+  var dd = document.getElementById('msdd-'+key);
+  rebuildDDItems(dd, key);
+  updateMSTrigger(key);
+  renderTags(key);
+  updatePrintText(key);
+  
+  saveCloudSettings(); 
+}
+
+function deleteMSOption(key, index, event) {
+  event.stopPropagation();
+  if(!confirm('確定要刪除「' + msOptions[key][index] + '」這個選項嗎？\n(注意：只會影響後續建立的表單，舊表單不受影響)')) return;
+  msOptions[key].splice(index, 1);
+  var newState = new Set();
+  msState[key].forEach(function(i) {
+    if (i < index) newState.add(i);
+    else if (i > index) newState.add(i - 1);
+  });
+  msState[key] = newState;
+  var dd = document.getElementById('msdd-'+key);
+  rebuildDDItems(dd, key);
+  updateMSTrigger(key);
+  renderTags(key);
+  updatePrintText(key);
+  saveCloudSettings(); 
+}
+
+function toggleMSOpt(key,i,checked){
+  if(checked)msState[key].add(i);else msState[key].delete(i);
+  var item=document.getElementById('mso-'+key+'-'+i);if(item)item.classList.toggle('sel',checked);
+  updateMSTrigger(key);renderTags(key);updatePrintText(key);
+}
+
+function addMSOption(key){
+  var inp=document.getElementById('msadd-'+key);
+  var val=inp.value.trim();if(!val)return;
+  msOptions[key].push(val);
+  var i=msOptions[key].length-1;
+  msState[key].add(i);
+  var dd=document.getElementById('msdd-'+key);rebuildDDItems(dd,key);
+  updateMSTrigger(key);renderTags(key);updatePrintText(key);
+  inp.value='';
+  saveCloudSettings(); 
+}
+
+function toggleMS(key){
+  var dd=document.getElementById('msdd-'+key),tr=document.getElementById('mst-'+key),ar=document.getElementById('msa-'+key);
+  var isOpen=dd.classList.contains('open');
+  document.querySelectorAll('.ms-dd.open,.ms-trigger.open,.ms-arrow.open').forEach(function(el){el.classList.remove('open');});
+  if(!isOpen){dd.classList.add('open');tr.classList.add('open');ar.classList.add('open');}
+}
+function updateMSTrigger(key){
+  var el=document.getElementById('mstt-'+key);if(!el)return;
+  if(msState[key].size===0){el.textContent=msPh[key];el.className='ms-trigger-text';}
+  else{el.textContent=msState[key].size+' 項已選';el.className='ms-trigger-text has';}
+}
+function renderTags(key){
+  var d=document.getElementById('mstags-'+key);if(!d)return;d.innerHTML='';
+  msState[key].forEach(function(i){
+    if(i>=msOptions[key].length)return;
+    var tag=document.createElement('span');tag.className='tag';
+    var s=msOptions[key][i];var sh=s.length>28?s.substring(0,28)+'…':s;
+    tag.innerHTML=sh+'<span class="tag-x" onclick="removeTag(\''+key+'\','+i+')">×</span>';d.appendChild(tag);
+  });
+}
+function removeTag(key,i){
+  msState[key].delete(i);
+  var cb=document.getElementById('mscb-'+key+'-'+i);
+  if(cb){cb.checked=false;var opt=document.getElementById('mso-'+key+'-'+i);if(opt)opt.classList.remove('sel');}
+  updateMSTrigger(key);renderTags(key);updatePrintText(key);
+}
+function updatePrintText(key){
+  var pid=msPrintId[key];if(!pid)return;
+  var el=document.getElementById(pid);if(!el)return;
+  var selected=[];
+  msState[key].forEach(function(i){if(i<msOptions[key].length)selected.push(msOptions[key][i]);});
+  el.textContent=selected.length>0?selected.join('、'):'（未填寫）';
+}
+function updateAllPrintText(){
+  ['disease','eathabit','diet','overall'].forEach(function(k){updatePrintText(k);});
+}
+document.addEventListener('click',function(e){if(!e.target.closest('.multiselect-wrap')){document.querySelectorAll('.ms-dd.open,.ms-trigger.open,.ms-arrow.open').forEach(function(el){el.classList.remove('open');});}});
+
+// ==========================================
+// 全同步表單載入邏輯 
 // ==========================================
 function applyFormDataSync(d, isBatchPrint = false){
   if(d.org){
@@ -932,45 +1221,6 @@ function applyFormDataSync(d, isBatchPrint = false){
       updateMSTrigger(k);renderTags(k);updatePrintText(k);
     }
   });
-}
-
-function collectFormData(){
-  var eat10Vals=[],chewVals=[];
-  eat10Items.forEach(function(_,i){eat10Vals.push(parseInt(document.getElementById('e'+i).value));});
-  chewItems.forEach(function(_,i){chewVals.push(parseInt(document.getElementById('c'+i).value));});
-  var msSelected={},msOpts={};
-  ['disease','eathabit','diet','overall'].forEach(function(k){msSelected[k]=Array.from(msState[k]);msOpts[k]=msOptions[k].slice();});
-  return {
-    exportedAt:new Date().toISOString(),
-    org:document.getElementById('orgSelect').value,
-    name:document.getElementById('nameSelect').value,
-    gender:document.getElementById('gender').value,
-    age:document.getElementById('age').value,
-    height:document.getElementById('height').value,
-    weight:document.getElementById('weight').value,
-    vision:document.getElementById('vision').value,
-    hearing:document.getElementById('hearing').value,
-    cognition:document.getElementById('cognition').value,
-    cheekPuff:document.getElementById('cheekPuff').value,
-    cheekPuffOther:document.getElementById('cheekPuffOther').value,
-    tongueFlex:document.getElementById('tongueFlex').value,
-    tongueFlexOther:document.getElementById('tongueFlexOther').value,
-    eat10Remark:document.getElementById('eat10Remark').value,
-    eat10RemarkOther:document.getElementById('eat10RemarkOther').value,
-    eat10:eat10Vals,
-    teethFunc:document.getElementById('teethFunc').value,
-    teethOther:document.getElementById('teethOther').value,
-    chewRemark:document.getElementById('chewRemark').value,
-    chewRemarkOther:document.getElementById('chewRemarkOther').value,
-    chew:chewVals,
-    dietHabit:document.getElementById('dietHabit').value,
-    mealTime:document.getElementById('mealTime').value,
-    msSelected:msSelected,
-    msOpts:msOpts,
-    noteText:document.getElementById('noteText').value,
-    signature:document.getElementById('signature').value,
-    assessDate:document.getElementById('assessDate').value
-  };
 }
 
 function exportJSON(){var data=collectFormData();var name=(data.name||'未命名')+'_評估表_'+(data.assessDate||new Date().toISOString().split('T')[0]);downloadJSON(data,name+'.json');}
