@@ -111,7 +111,6 @@ tr:hover td{background:#fafaf8;}
 .reset-btn:hover{background:#f5f5f5;}
 .print-disease{display:none;}
 
-/* 登入畫面專屬 CSS */
 #loginOverlay { display:flex; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:9999; align-items:center; justify-content:center; flex-direction:column; }
 .login-box { background:#fff; padding:2.5rem 2rem; border-radius:12px; width:340px; text-align:center; box-shadow:0 10px 25px rgba(0,0,0,0.3); }
 .login-box h2 { margin-bottom:1.5rem; color:#185FA5; font-size:20px; }
@@ -119,7 +118,6 @@ tr:hover td{background:#fafaf8;}
 .login-box button { width:100%; padding:12px; background:#185FA5; color:#fff; font-size:15px; border:none; border-radius:6px; cursor:pointer; font-weight:bold; }
 .login-box button:hover { background:#0C447C; }
 
-/* Dashboard 專屬 CSS */
 .dash-col { flex:1; border:1px solid #d0d0c8; border-radius:8px; padding:10px; background:#fff; display:flex; flex-direction:column;}
 .dash-col h4 { margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid #e0e0e0; font-size:14px; }
 .dash-item { padding:8px 10px; border-bottom:1px solid #f0f0ec; cursor:pointer; display:flex; justify-content:space-between; align-items:center; font-size:13px; }
@@ -130,7 +128,6 @@ tr:hover td{background:#fafaf8;}
 .dash-action-btn { background:#fff; border:1px solid #ccc; border-radius:4px; padding:3px 8px; cursor:pointer; font-size:11px; color:#555; }
 .dash-action-btn:hover { border-color:#185FA5; color:#185FA5; background:#E6F1FB; }
 
-/* ★★★ 列印版面極致壓縮 ★★★ */
 @media print{
   @page{size:A4;margin:8mm 10mm;} 
   body{background:#fff;padding:0;font-size:12px;line-height:1.35;} 
@@ -139,28 +136,22 @@ tr:hover td{background:#fafaf8;}
   .form-header .sub-title{font-size:12px;margin-top:0;}
   .org-select{font-size:15px;border-bottom:1px solid #666;padding:0;}
   .mgr-btn,.logout-btn,.btn-row,.overlay,.records-bar{display:none!important;}
-  
   .section{padding:.3rem .5rem;margin-bottom:.3rem;border:1px solid #aaa;border-radius:3px;page-break-inside:avoid;} 
   .section-title{font-size:13px;margin-bottom:4px;padding:3px 6px;background:#eee;border-left:3px solid #666;}
   .field-row{gap:4px;margin-bottom:4px;} 
   .field label{font-size:10px;margin-bottom:1px;}
   input,select,textarea{font-size:12px;padding:2px 4px;background:#fff;border:1px solid #aaa;}
-  
   .bmi-badge{font-size:12px;padding:2px 4px;min-height:22px;}
   table{font-size:12px;margin-bottom:2px;}
   th{font-size:12px;padding:3px 4px;}
   td{font-size:12px;padding:3px 4px;}
-  
   .ms-trigger{display:none;}
   .ms-dd{display:none!important;}
   .ms-tags{display:none!important;}
   .print-disease{display:block;font-size:12px;color:#000;padding:2px 0;line-height:1.4;}
   .score-badge{font-size:11px;padding:1px 6px;}
-  
   p {margin-bottom: 2px!important; font-size:11px!important;}
   .field-row[style*="background"] { background:transparent!important; border:none!important; padding:0!important;}
-
-  /* 批次列印時的設定 */
   #batchPrintArea { display:block!important; width:100%; }
   #batchPrintArea .form-wrap { display:block!important; page-break-after: always; margin-bottom:0; box-shadow:none; }
   #batchPrintArea .form-wrap:last-child { page-break-after: auto; }
@@ -368,17 +359,16 @@ tr:hover td{background:#fafaf8;}
 </div>
 </div>
 
+<!-- Print Modal -->
 <div class="overlay" id="printOverlay" onclick="overlayClick(event, 'printOverlay')">
   <div class="modal" style="width:500px;">
     <div class="modal-title">
       <span>🖨️ 批次列印 / 匯出 PDF</span>
       <span class="modal-close" onclick="closePrintModal()">×</span>
     </div>
-    
     <div style="margin-bottom:15px;">
       <button class="print-btn" onclick="doPrintSingle()" style="width:100%; background:#085041; margin-bottom:10px;">📄 僅列印當前畫面</button>
     </div>
-    
     <div style="border-top:1px solid #e8e8e8; margin-top:15px; padding-top:15px;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
         <span style="font-weight:bold; color:#185FA5;">☑️ 勾選欲列印的雲端個案</span>
@@ -387,15 +377,13 @@ tr:hover td{background:#fafaf8;}
           <button class="dash-action-btn" onclick="selectAllPrint(false)">全不選</button>
         </div>
       </div>
-      
-      <div id="printChecklist" style="max-height:250px; overflow-y:auto; border:1px solid #d0d0c8; border-radius:6px; padding:10px; background:#fafaf8; display:flex; flex-direction:column; gap:8px;">
-        </div>
-      
+      <div id="printChecklist" style="max-height:250px; overflow-y:auto; border:1px solid #d0d0c8; border-radius:6px; padding:10px; background:#fafaf8; display:flex; flex-direction:column; gap:8px;"></div>
       <button class="print-btn" onclick="doBatchPrint()" style="width:100%; margin-top:15px;">🖨️ 列印已勾選的評估表</button>
     </div>
   </div>
 </div>
 
+<!-- Transfer Modal -->
 <div class="overlay" id="transferOverlay" onclick="overlayClick(event, 'transferOverlay')">
   <div class="modal" style="width:400px;">
     <div class="modal-title">
@@ -411,6 +399,7 @@ tr:hover td{background:#fafaf8;}
   </div>
 </div>
 
+<!-- Manager Modal -->
 <div class="overlay" id="mgrOverlay" onclick="overlayClick(event, 'mgrOverlay')">
   <div class="modal">
     <div class="modal-title">
@@ -455,13 +444,13 @@ tr:hover td{background:#fafaf8;}
   </div>
 </div>
 
+<!-- Dashboard Modal -->
 <div class="overlay" id="dashOverlay" onclick="overlayClick(event, 'dashOverlay')">
   <div class="modal" style="width:750px;">
     <div class="modal-title">
       <span>📊 <span id="dashOrgName">機構</span> 評估進度總覽</span>
       <span class="modal-close" onclick="closeDashboard()">×</span>
     </div>
-    
     <div class="field-row" style="background:#f0f4fb; padding:12px; border:1px solid #c8d8f0; border-radius:8px; align-items:flex-end;">
        <div class="field">
          <label style="color:#185FA5; font-weight:bold;">篩選年份</label>
@@ -482,7 +471,6 @@ tr:hover td{background:#fafaf8;}
          </select>
        </div>
     </div>
-
     <div style="display:flex; gap:15px; margin-top:15px; height:350px;">
        <div class="dash-col">
          <h4 style="color:#085041;">✅ 已評估 (<span id="countDone">0</span>)</h4>
@@ -498,7 +486,7 @@ tr:hover td{background:#fafaf8;}
 
 <script>
 // ==========================================
-// Firebase 雲端資料庫設定區
+// Firebase 設定
 // ==========================================
 const firebaseConfig = {
   apiKey: "AIzaSyA0j-YqXIWtAec8zfo7apVhImTWPtBBZA4",
@@ -514,7 +502,7 @@ const auth = firebase.auth();
 const db = firebase.firestore();
 
 // ==========================================
-// 帳號密碼登入邏輯
+// 登入邏輯
 // ==========================================
 auth.onAuthStateChanged(user => {
   if (user) {
@@ -535,12 +523,12 @@ function doLogin() {
 function doLogout() { if(confirm("確定要登出嗎？")) { auth.signOut(); } }
 
 // ==========================================
-// 核心變數與雲端同步邏輯
+// 核心變數
 // ==========================================
 var orgs = [];
 var members = {};
 var mgrActiveOrg = null;
-var allCurrentOrgRecords = []; 
+var allCurrentOrgRecords = [];
 
 function loadCloudSettings() {
   db.collection("system").doc("settings").get().then(doc => {
@@ -548,12 +536,9 @@ function loadCloudSettings() {
       var data = doc.data();
       orgs = data.orgs || [];
       members = data.members || {};
-      
-      // 修復防呆：確保 msOptions 載入時即使有缺漏也不會報錯當機
       if(data.msOptions) {
          ['disease','eathabit','diet','overall'].forEach(function(k){
             if(data.msOptions[k]) {
-               // 將 Firestore 儲存的格式轉回純陣列
                msOptions[k] = Array.isArray(data.msOptions[k]) ? data.msOptions[k] : Object.values(data.msOptions[k]);
             }
             buildMS('ms-'+k,k);
@@ -588,7 +573,7 @@ function currentOrgName() {
 }
 
 // ==========================================
-// 雲端個案存取邏輯
+// 雲端個案存取
 // ==========================================
 function renderRecordSelect() {
   var sel = document.getElementById('recordSelect');
@@ -599,11 +584,9 @@ function renderRecordSelect() {
     sel.innerHTML = '<option value="">── 選擇雲端儲存個案 ──</option>';
     return;
   }
-  
   db.collection("records").where("orgId", "==", orgId).get().then(snap => {
     sel.innerHTML = '<option value="">── 選擇雲端儲存個案 ──</option>';
-    allCurrentOrgRecords = []; 
-    
+    allCurrentOrgRecords = [];
     if (snap.empty) {
       var opt = document.createElement('option'); opt.disabled = true; opt.textContent = '（此機構尚無儲存個案）'; sel.appendChild(opt);
     } else {
@@ -627,11 +610,9 @@ function saveRecord() {
   var data = collectFormData();
   var name = data.name;
   if (!name) { alert('請先選擇姓名再儲存'); return; }
-  
   var orgId = currentOrgId();
   var key = name + '（' + (data.assessDate || '無日期') + '）';
-  var docId = orgId + "___" + key; 
-  
+  var docId = orgId + "___" + key;
   db.collection("records").doc(docId).set({
     orgId: orgId,
     recordKey: key,
@@ -647,11 +628,9 @@ function saveRecord() {
 
 function loadRecord() {
   var key = document.getElementById('recordSelect').value;
-  if (!key) return; 
-  
+  if (!key) return;
   var orgId = currentOrgId();
   var docId = orgId + "___" + key;
-  
   db.collection("records").doc(docId).get().then(doc => {
     if (doc.exists) {
       applyFormDataSync(doc.data().data);
@@ -667,7 +646,6 @@ function deleteRecord() {
   if (!confirm('⚠️ 警告：確定從雲端永久刪除「' + key + '」嗎？\n刪除後無法復原！')) return;
   var orgId = currentOrgId();
   var docId = orgId + "___" + key;
-  
   db.collection("records").doc(docId).delete().then(() => {
     renderRecordSelect();
     resetForm(false);
@@ -695,33 +673,91 @@ function clearFormKeepIdentity(){
 }
 
 // ==========================================
-// 🖨️ 批次列印 PDF 邏輯 (修復連點與瀏覽器繪圖卡死問題)
+// ★ 修正一：新增缺失的 collectFormData 函式
+// ==========================================
+function collectFormData() {
+  var eat10 = eat10Items.map(function(_, i) {
+    return document.getElementById('e'+i).value;
+  });
+  var chew = chewItems.map(function(_, i) {
+    return document.getElementById('c'+i).value;
+  });
+  var msSelected = {};
+  var msOpts = {};
+  ['disease','eathabit','diet','overall'].forEach(function(k) {
+    msSelected[k] = Array.from(msState[k]);
+    msOpts[k] = msOptions[k].slice();
+  });
+  return {
+    org:              document.getElementById('orgSelect').value,
+    name:             document.getElementById('nameSelect').value,
+    gender:           document.getElementById('gender').value,
+    age:              document.getElementById('age').value,
+    height:           document.getElementById('height').value,
+    weight:           document.getElementById('weight').value,
+    vision:           document.getElementById('vision').value,
+    hearing:          document.getElementById('hearing').value,
+    cognition:        document.getElementById('cognition').value,
+    cheekPuff:        document.getElementById('cheekPuff').value,
+    cheekPuffOther:   document.getElementById('cheekPuffOther').value,
+    tongueFlex:       document.getElementById('tongueFlex').value,
+    tongueFlexOther:  document.getElementById('tongueFlexOther').value,
+    eat10:            eat10,
+    eat10Remark:      document.getElementById('eat10Remark').value,
+    eat10RemarkOther: document.getElementById('eat10RemarkOther').value,
+    teethFunc:        document.getElementById('teethFunc').value,
+    teethOther:       document.getElementById('teethOther').value,
+    chew:             chew,
+    chewRemark:       document.getElementById('chewRemark').value,
+    chewRemarkOther:  document.getElementById('chewRemarkOther').value,
+    dietHabit:        document.getElementById('dietHabit').value,
+    mealTime:         document.getElementById('mealTime').value,
+    noteText:         document.getElementById('noteText').value,
+    signature:        document.getElementById('signature').value,
+    assessDate:       document.getElementById('assessDate').value,
+    msSelected:       msSelected,
+    msOpts:           msOpts
+  };
+}
+
+// ==========================================
+// ★ 修正二：新增缺失的 resetForm 函式
+// ==========================================
+function resetForm(shouldRefreshRecords) {
+  document.getElementById('nameSelect').selectedIndex = 0;
+  clearFormKeepIdentity();
+  if (shouldRefreshRecords !== false) {
+    renderRecordSelect();
+  }
+}
+
+// ==========================================
+// 🖨️ 列印邏輯
 // ==========================================
 function openPrintModal() {
-  let orgId = currentOrgId();
+  var orgId = currentOrgId();
   if(!orgId || orgId === '__none__') {
-      doPrintSingle();
-      return;
+    doPrintSingle();
+    return;
   }
-  let listDiv = document.getElementById('printChecklist');
+  var listDiv = document.getElementById('printChecklist');
   listDiv.innerHTML = '';
-  
   if(allCurrentOrgRecords.length === 0) {
-      listDiv.innerHTML = '<div style="color:#999; font-size:12px; text-align:center;">目前機構無雲端資料</div>';
+    listDiv.innerHTML = '<div style="color:#999; font-size:12px; text-align:center;">目前機構無雲端資料</div>';
   } else {
-      allCurrentOrgRecords.forEach(rec => {
-          let label = document.createElement('label');
-          label.style.display = 'flex'; label.style.alignItems = 'center'; label.style.gap = '8px'; label.style.cursor = 'pointer'; label.style.fontSize = '13px';
-          let cb = document.createElement('input');
-          cb.type = 'checkbox'; cb.className = 'print-cb'; cb.value = rec.recordKey;
-          
-          let curKey = document.getElementById('recordSelect').value;
-          if(rec.recordKey === curKey) cb.checked = true;
-          
-          label.appendChild(cb);
-          label.appendChild(document.createTextNode(rec.recordKey));
-          listDiv.appendChild(label);
-      });
+    allCurrentOrgRecords.forEach(function(rec) {
+      var label = document.createElement('label');
+      label.style.cssText = 'display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;';
+      var cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.className = 'print-cb';
+      cb.value = rec.recordKey;
+      var curKey = document.getElementById('recordSelect').value;
+      if(rec.recordKey === curKey) cb.checked = true;
+      label.appendChild(cb);
+      label.appendChild(document.createTextNode(rec.recordKey));
+      listDiv.appendChild(label);
+    });
   }
   document.getElementById('printOverlay').classList.add('show');
 }
@@ -729,7 +765,7 @@ function openPrintModal() {
 function closePrintModal() { document.getElementById('printOverlay').classList.remove('show'); }
 
 function selectAllPrint(check) {
-  document.querySelectorAll('.print-cb').forEach(cb => cb.checked = check);
+  document.querySelectorAll('.print-cb').forEach(function(cb) { cb.checked = check; });
 }
 
 function doPrintSingle() {
@@ -738,164 +774,140 @@ function doPrintSingle() {
 }
 
 function doBatchPrint() {
-  let selectedKeys = Array.from(document.querySelectorAll('.print-cb:checked')).map(cb => cb.value);
-  if(selectedKeys.length === 0) return alert("請勾選至少一筆資料");
-  
-  // 避免重複點擊，並給予視覺提示
-  let btn = document.querySelector('#printOverlay .print-btn:last-child');
-  let originalText = btn.textContent;
+  var selectedKeys = Array.from(document.querySelectorAll('.print-cb:checked')).map(function(cb) { return cb.value; });
+  if(selectedKeys.length === 0) { alert("請勾選至少一筆資料"); return; }
+
+  var btn = document.querySelector('#printOverlay .print-btn:last-child');
+  var originalText = btn.textContent;
   btn.textContent = "⏳ 處理中，請稍候...";
   btn.disabled = true;
 
-  // 使用 setTimeout 讓瀏覽器有喘息時間來更新上面的「處理中」按鈕
-  setTimeout(() => {
-      closePrintModal();
-      btn.textContent = originalText;
-      btn.disabled = false;
+  setTimeout(function() {
+    closePrintModal();
+    btn.textContent = originalText;
+    btn.disabled = false;
 
-      let backupData = collectFormData();
-      let backupOrg = document.getElementById('orgSelect').value;
-      let backupRec = document.getElementById('recordSelect').value;
-      
-      let printArea = document.createElement('div');
-      printArea.id = 'batchPrintArea';
-      document.body.appendChild(printArea);
-      
-      document.getElementById('mainFormWrap').style.display = 'none';
-      
-      for (let i = 0; i < selectedKeys.length; i++) {
-          let key = selectedKeys[i];
-          let rec = allCurrentOrgRecords.find(r => r.recordKey === key);
-          if(rec) {
-              resetForm(false);
-              // 帶入 true 表示這是批次列印，不要觸發雲端查詢
-              applyFormDataSync(rec.data, true);
-              updateAllPrintText();
-              
-              let clone = document.getElementById('mainFormWrap').cloneNode(true);
-              clone.id = 'print_clone_' + i; 
-              clone.style.display = 'block';
-              
-              let oSel = document.getElementById('mainFormWrap').querySelectorAll('select');
-              let cSel = clone.querySelectorAll('select');
-              oSel.forEach((s, idx) => cSel[idx].value = s.value);
-              
-              let oInp = document.getElementById('mainFormWrap').querySelectorAll('input, textarea');
-              let cInp = clone.querySelectorAll('input, textarea');
-              oInp.forEach((inp, idx) => {
-                   if(inp.type === 'checkbox' || inp.type === 'radio') cInp[idx].checked = inp.checked;
-                   else cInp[idx].value = inp.value;
-              });
-              
-              clone.querySelectorAll('.btn-row, .records-bar, .form-header button, .overlay').forEach(b => b.remove());
-              
-              printArea.appendChild(clone);
-          }
+    var backupData = collectFormData();
+    var backupOrg = document.getElementById('orgSelect').value;
+    var backupRec = document.getElementById('recordSelect').value;
+
+    var printArea = document.createElement('div');
+    printArea.id = 'batchPrintArea';
+    document.body.appendChild(printArea);
+    document.getElementById('mainFormWrap').style.display = 'none';
+
+    for(var i = 0; i < selectedKeys.length; i++) {
+      var key = selectedKeys[i];
+      var rec = allCurrentOrgRecords.find(function(r) { return r.recordKey === key; });
+      if(rec) {
+        resetForm(false);
+        applyFormDataSync(rec.data, true);
+        updateAllPrintText();
+
+        var clone = document.getElementById('mainFormWrap').cloneNode(true);
+        clone.id = 'print_clone_' + i;
+        clone.style.display = 'block';
+
+        var oSel = document.getElementById('mainFormWrap').querySelectorAll('select');
+        var cSel = clone.querySelectorAll('select');
+        oSel.forEach(function(s, idx) { cSel[idx].value = s.value; });
+
+        var oInp = document.getElementById('mainFormWrap').querySelectorAll('input, textarea');
+        var cInp = clone.querySelectorAll('input, textarea');
+        oInp.forEach(function(inp, idx) {
+          if(inp.type === 'checkbox' || inp.type === 'radio') cInp[idx].checked = inp.checked;
+          else cInp[idx].value = inp.value;
+        });
+
+        clone.querySelectorAll('.btn-row, .records-bar, .form-header button, .overlay').forEach(function(b) { b.remove(); });
+        printArea.appendChild(clone);
       }
-      
-      // 再給予 0.5 秒的延遲，讓瀏覽器有時間把剛剛產生的大量 HTML 給畫出來，再呼叫列印
-      setTimeout(() => {
-          window.print();
-          
-          printArea.remove();
-          document.getElementById('mainFormWrap').style.display = 'block';
-          resetForm(false);
-          
-          if(backupOrg) {
-              document.getElementById('orgSelect').value = backupOrg;
-              // 恢復姓名選單
-              var sel = document.getElementById('nameSelect');
-              sel.innerHTML = '<option value="">── 請選擇姓名 ──</option>';
-              (members[backupOrg] || []).forEach(n => { var o = document.createElement('option'); o.value = n; o.textContent = n; sel.appendChild(o); });
-          }
-          applyFormDataSync(backupData, true);
-          document.getElementById('recordSelect').value = backupRec;
-          
-          renderRecordSelect(); // 背景更新一次雲端檔案清單
-      }, 500);
+    }
+
+    setTimeout(function() {
+      window.print();
+      printArea.remove();
+      document.getElementById('mainFormWrap').style.display = 'block';
+      resetForm(false);
+
+      if(backupOrg) {
+        document.getElementById('orgSelect').value = backupOrg;
+        var sel = document.getElementById('nameSelect');
+        sel.innerHTML = '<option value="">── 請選擇姓名 ──</option>';
+        (members[backupOrg] || []).forEach(function(n) {
+          var o = document.createElement('option');
+          o.value = n; o.textContent = n;
+          sel.appendChild(o);
+        });
+      }
+      applyFormDataSync(backupData, true);
+      document.getElementById('recordSelect').value = backupRec;
+      renderRecordSelect();
+    }, 500);
 
   }, 100);
 }
 
 // ==========================================
-// 🔄 機構轉出邏輯
+// 機構轉出邏輯
 // ==========================================
 function openTransferModal() {
-  let name = document.getElementById('nameSelect').value;
-  let curOrgId = currentOrgId();
-  if(!name || curOrgId === '__none__') return alert("請先選擇要轉出的長輩姓名！");
-  
+  var name = document.getElementById('nameSelect').value;
+  var curOrgId = currentOrgId();
+  if(!name || curOrgId === '__none__') { alert("請先選擇要轉出的長輩姓名！"); return; }
   document.getElementById('transferTargetName').textContent = name;
-  let sel = document.getElementById('transferOrgSelect');
+  var sel = document.getElementById('transferOrgSelect');
   sel.innerHTML = '<option value="">-- 請選擇 --</option>';
-  orgs.forEach(o => {
-      if(o.id !== curOrgId) {
-          sel.appendChild(new Option(o.name, o.id));
-      }
+  orgs.forEach(function(o) {
+    if(o.id !== curOrgId) sel.appendChild(new Option(o.name, o.id));
   });
   document.getElementById('transferOverlay').classList.add('show');
 }
 
 async function doTransfer() {
-  let targetOrgId = document.getElementById('transferOrgSelect').value;
-  let curOrgId = currentOrgId();
-  let name = document.getElementById('nameSelect').value;
-  
-  if(!targetOrgId) return alert("請選擇目標機構");
-  
-  members[curOrgId] = members[curOrgId].filter(n => n !== name);
+  var targetOrgId = document.getElementById('transferOrgSelect').value;
+  var curOrgId = currentOrgId();
+  var name = document.getElementById('nameSelect').value;
+  if(!targetOrgId) { alert("請選擇目標機構"); return; }
+  members[curOrgId] = members[curOrgId].filter(function(n) { return n !== name; });
   if(!members[targetOrgId]) members[targetOrgId] = [];
   if(!members[targetOrgId].includes(name)) members[targetOrgId].push(name);
   saveCloudSettings();
-  
-  let snapshot = await db.collection("records").where("orgId", "==", curOrgId).get();
-  let batch = db.batch();
-  
-  snapshot.forEach(doc => {
-      let data = doc.data();
-      if(data.data && data.data.name === name) {
-          let oldRef = db.collection("records").doc(doc.id);
-          batch.delete(oldRef); 
-          
-          data.orgId = targetOrgId;
-          data.data.org = targetOrgId;
-          let newDocId = targetOrgId + "___" + data.recordKey;
-          let newRef = db.collection("records").doc(newDocId);
-          batch.set(newRef, data); 
-      }
+  var snapshot = await db.collection("records").where("orgId", "==", curOrgId).get();
+  var batch = db.batch();
+  snapshot.forEach(function(doc) {
+    var data = doc.data();
+    if(data.data && data.data.name === name) {
+      batch.delete(db.collection("records").doc(doc.id));
+      data.orgId = targetOrgId;
+      data.data.org = targetOrgId;
+      batch.set(db.collection("records").doc(targetOrgId + "___" + data.recordKey), data);
+    }
   });
-  
   await batch.commit();
-  alert(`✅ 已成功將「${name}」的所有資料轉出至新機構！`);
+  alert('✅ 已成功將「' + name + '」的所有資料轉出至新機構！');
   document.getElementById('transferOverlay').classList.remove('show');
-  
-  onOrgChange(); 
+  onOrgChange();
   resetForm(false);
 }
 
 // ==========================================
-// 📊 評估進度 Dashboard 邏輯
+// Dashboard 邏輯
 // ==========================================
 function openDashboard() {
-  let orgId = currentOrgId();
-  if(!orgId || orgId === '__none__') return alert("請先在左上角選擇機構，才能查看進度總覽。");
-  
+  var orgId = currentOrgId();
+  if(!orgId || orgId === '__none__') { alert("請先在左上角選擇機構，才能查看進度總覽。"); return; }
   document.getElementById('dashOrgName').textContent = currentOrgName().replace(/（.*?）/g, '');
-  
-  let ySel = document.getElementById('filterYear');
+  var ySel = document.getElementById('filterYear');
   if(ySel.options.length === 0) {
-    let curY = new Date().getFullYear();
-    for(let y = curY - 2; y <= curY + 2; y++) {
-      ySel.add(new Option(y + "年", y));
-    }
+    var curY = new Date().getFullYear();
+    for(var y = curY - 2; y <= curY + 2; y++) ySel.add(new Option(y + "年", y));
     ySel.value = curY;
   }
-  
   document.getElementById('dashOverlay').classList.add('show');
-  
-  db.collection("records").where("orgId", "==", orgId).get().then(snap => {
+  db.collection("records").where("orgId", "==", orgId).get().then(function(snap) {
     allCurrentOrgRecords = [];
-    snap.forEach(doc => allCurrentOrgRecords.push(doc.data()));
+    snap.forEach(function(doc) { allCurrentOrgRecords.push(doc.data()); });
     renderDashboard();
   });
 }
@@ -903,16 +915,14 @@ function openDashboard() {
 function closeDashboard() { document.getElementById('dashOverlay').classList.remove('show'); }
 
 function renderDashboard() {
-  let year = document.getElementById('filterYear').value;
-  let period = document.getElementById('filterPeriod').value;
-  let orgMembers = members[currentOrgId()] || [];
-
-  let filteredRecords = allCurrentOrgRecords.filter(r => {
+  var year = document.getElementById('filterYear').value;
+  var period = document.getElementById('filterPeriod').value;
+  var orgMembers = members[currentOrgId()] || [];
+  var filteredRecords = allCurrentOrgRecords.filter(function(r) {
     if(!r.data || !r.data.assessDate) return false;
-    let d = new Date(r.data.assessDate);
-    let rY = d.getFullYear().toString();
-    let rM = d.getMonth() + 1; 
-
+    var d = new Date(r.data.assessDate);
+    var rY = d.getFullYear().toString();
+    var rM = d.getMonth() + 1;
     if(rY !== year) return false;
     if(period === 'ALL') return true;
     if(period === 'Q1') return rM >= 1 && rM <= 3;
@@ -922,28 +932,17 @@ function renderDashboard() {
     if(period.startsWith('M')) return rM.toString() === period.substring(1);
     return false;
   });
-
-  let doneNames = new Set(filteredRecords.map(r => r.data.name));
-  let pendingNames = orgMembers.filter(m => !doneNames.has(m));
-
+  var doneNames = new Set(filteredRecords.map(function(r) { return r.data.name; }));
+  var pendingNames = orgMembers.filter(function(m) { return !doneNames.has(m); });
   document.getElementById('countDone').textContent = doneNames.size;
   document.getElementById('countPending').textContent = pendingNames.length;
-
-  let doneHtml = Array.from(doneNames).map(name => {
-    let rec = filteredRecords.find(r => r.data.name === name);
-    return `<div class="dash-item done" onclick="loadFromDash('${rec.recordKey}')">
-              <span>${name} <small style="color:#888;">(${rec.data.assessDate})</small></span>
-              <button class="dash-action-btn">查看資料</button>
-            </div>`;
+  var doneHtml = Array.from(doneNames).map(function(name) {
+    var rec = filteredRecords.find(function(r) { return r.data.name === name; });
+    return '<div class="dash-item done" onclick="loadFromDash(\'' + rec.recordKey + '\')"><span>' + name + ' <small style="color:#888;">(' + rec.data.assessDate + ')</small></span><button class="dash-action-btn">查看資料</button></div>';
   }).join('');
-
-  let pendingHtml = pendingNames.map(name => {
-    return `<div class="dash-item pending">
-              <span>${name}</span>
-              <button class="dash-action-btn" onclick="startNewFromDash('${name}')">快速建立</button>
-            </div>`;
+  var pendingHtml = pendingNames.map(function(name) {
+    return '<div class="dash-item pending"><span>' + name + '</span><button class="dash-action-btn" onclick="startNewFromDash(\'' + name + '\')">快速建立</button></div>';
   }).join('');
-
   document.getElementById('listDone').innerHTML = doneHtml || '<div style="color:#999; font-size:12px; padding:10px;">（此期間無紀錄）</div>';
   document.getElementById('listPending').innerHTML = pendingHtml || '<div style="color:#085041; font-size:12px; padding:10px; font-weight:bold;">🎉 全數完成評估！</div>';
 }
@@ -956,37 +955,156 @@ function loadFromDash(key) {
 
 function startNewFromDash(name) {
   document.getElementById('nameSelect').value = name;
-  clearFormKeepIdentity(); 
+  clearFormKeepIdentity();
   closeDashboard();
-  window.scrollTo({ top: 0, behavior: 'smooth' }); 
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 // ==========================================
-// 介面與功能邏輯
+// 介面與機構管理邏輯
 // ==========================================
 function renderOrgSelect() {
   var sel = document.getElementById('orgSelect'), cur = sel.value;
   sel.innerHTML = '<option value="">── 請選擇機構 ──</option>';
-  orgs.forEach(o => { var opt = document.createElement('option'); opt.value = o.id; opt.textContent = o.name; sel.appendChild(opt); });
+  orgs.forEach(function(o) {
+    var opt = document.createElement('option'); opt.value = o.id; opt.textContent = o.name; sel.appendChild(opt);
+  });
   if (cur) sel.value = cur;
 }
 
 function onOrgChange() {
-  var orgId = document.getElementById('orgSelect').value, sel = document.getElementById('nameSelect');
+  var orgId = document.getElementById('orgSelect').value;
+  var sel = document.getElementById('nameSelect');
   sel.innerHTML = '<option value="">── 請選擇姓名 ──</option>';
   if (!orgId) {
     var lbl = document.getElementById('recOrgLabel'); if (lbl) lbl.textContent = '請先選擇機構';
     document.getElementById('recordSelect').innerHTML = '<option value="">── 選擇雲端儲存個案 ──</option>';
     return;
   }
-  (members[orgId] || []).forEach(n => { var o = document.createElement('option'); o.value = n; o.textContent = n; sel.appendChild(o); });
-  
-  var found = orgs.find(o => o.id === orgId);
+  (members[orgId] || []).forEach(function(n) {
+    var o = document.createElement('option'); o.value = n; o.textContent = n; sel.appendChild(o);
+  });
+  var found = orgs.find(function(o) { return o.id === orgId; });
   var lbl = document.getElementById('recOrgLabel');
   if (lbl && found) { lbl.textContent = '目前機構：' + found.name.replace(/（.*?）/g, '').trim(); }
   renderRecordSelect();
 }
 
+function overlayClick(e, id) {
+  if(e.target === document.getElementById(id)) document.getElementById(id).classList.remove('show');
+}
+
+function openMgr() {
+  renderOrgListMgr();
+  renderOrgTabsMgr();
+  document.getElementById('mgrOverlay').classList.add('show');
+}
+function closeMgr() { document.getElementById('mgrOverlay').classList.remove('show'); }
+
+function renderOrgListMgr() {
+  var d = document.getElementById('orgList'); d.innerHTML = '';
+  orgs.forEach(function(o, i) {
+    var row = document.createElement('div'); row.className = 'mgr-row';
+    row.innerHTML = '<input type="text" value="' + o.name + '" onchange="orgs[' + i + '].name=this.value"><button class="del-btn" onclick="delOrg(' + i + ')">刪除</button>';
+    d.appendChild(row);
+  });
+}
+
+function addOrg() {
+  var n = document.getElementById('newOrgName').value.trim();
+  if(!n) return;
+  var id = 'org_' + Date.now();
+  orgs.push({id:id,name:n});
+  members[id] = [];
+  document.getElementById('newOrgName').value = '';
+  renderOrgListMgr();
+  renderOrgTabsMgr();
+}
+
+function delOrg(i) {
+  if(!confirm('刪除機構「' + orgs[i].name + '」？')) return;
+  delete members[orgs[i].id];
+  orgs.splice(i, 1);
+  renderOrgListMgr();
+  renderOrgTabsMgr();
+}
+
+function renderOrgTabsMgr() {
+  var d = document.getElementById('orgTabs'); d.innerHTML = '';
+  orgs.forEach(function(o) {
+    var btn = document.createElement('div');
+    btn.className = 'org-tab' + (mgrActiveOrg === o.id ? ' active' : '');
+    btn.textContent = o.name;
+    btn.onclick = function() { mgrActiveOrg = o.id; renderOrgTabsMgr(); renderMemberList(); };
+    d.appendChild(btn);
+  });
+  if(!mgrActiveOrg && orgs.length > 0) { mgrActiveOrg = orgs[0].id; renderOrgTabsMgr(); }
+  renderMemberList();
+}
+
+function renderMemberList() {
+  var d = document.getElementById('memberList'); d.innerHTML = '';
+  if(!mgrActiveOrg) return;
+  (members[mgrActiveOrg] || []).forEach(function(m, i) {
+    var row = document.createElement('div'); row.className = 'mgr-row';
+    row.innerHTML = '<input type="text" value="' + m + '" onchange="members[mgrActiveOrg][' + i + ']=this.value"><button class="del-btn" onclick="delMember(' + i + ')">刪除</button>';
+    d.appendChild(row);
+  });
+}
+
+function addMember() {
+  var n = document.getElementById('newMemberName').value.trim();
+  if(!n || !mgrActiveOrg) return;
+  if(!members[mgrActiveOrg]) members[mgrActiveOrg] = [];
+  members[mgrActiveOrg].push(n);
+  document.getElementById('newMemberName').value = '';
+  renderMemberList();
+}
+
+function delMember(i) {
+  if(!mgrActiveOrg) return;
+  members[mgrActiveOrg].splice(i, 1);
+  renderMemberList();
+}
+
+function switchMemberTab(tab) {
+  document.getElementById('panelSingle').classList.toggle('active', tab === 'single');
+  document.getElementById('panelBatch').classList.toggle('active', tab === 'batch');
+  document.getElementById('tabSingle').classList.toggle('active', tab === 'single');
+  document.getElementById('tabBatch').classList.toggle('active', tab === 'batch');
+}
+
+function batchAddMembers() {
+  if(!mgrActiveOrg) return;
+  var lines = document.getElementById('batchInput').value.split('\n').map(function(s) { return s.trim(); }).filter(Boolean);
+  var added = 0;
+  lines.forEach(function(n) {
+    if(!members[mgrActiveOrg].includes(n)) { members[mgrActiveOrg].push(n); added++; }
+  });
+  document.getElementById('batchResult').textContent = '新增了 ' + added + ' 人';
+  renderMemberList();
+}
+
+function replaceMembers() {
+  if(!mgrActiveOrg) return;
+  if(!confirm('確定要取代現有名單嗎？')) return;
+  var lines = document.getElementById('batchInput').value.split('\n').map(function(s) { return s.trim(); }).filter(Boolean);
+  members[mgrActiveOrg] = lines;
+  document.getElementById('batchResult').textContent = '已取代，共 ' + lines.length + ' 人';
+  renderMemberList();
+}
+
+function saveMgr() {
+  saveCloudSettings();
+  renderOrgSelect();
+  onOrgChange();
+  closeMgr();
+  alert('✅ 已儲存至雲端');
+}
+
+// ==========================================
+// BMI 計算
+// ==========================================
 function calcBMI(){
   var h=parseFloat(document.getElementById('height').value),w=parseFloat(document.getElementById('weight').value),el=document.getElementById('bmiDisplay');
   if(h>0&&w>0){var bmi=w/((h/100)*(h/100)),b=bmi.toFixed(1),cls='bmi-badge',label='正常';
@@ -1002,15 +1120,24 @@ function checkTongueFlex(){ document.getElementById('tongueFlexOther').style.dis
 function checkEat10Remark(){ document.getElementById('eat10RemarkOther').style.display = document.getElementById('eat10Remark').value === '自行輸入' ? '' : 'none'; }
 function checkChewRemark(){ document.getElementById('chewRemarkOther').style.display = document.getElementById('chewRemark').value === '自行輸入' ? '' : 'none'; }
 
+// ==========================================
+// EAT-10 吞嚥篩檢
+// ==========================================
 var eat10Items=['吞嚥問題讓我的體重減輕','因為吞嚥問題不能在外面用餐','我喝飲料／水很費力','我吃固體食物很費力','我吞藥丸很費力','吞嚥會感覺到痛','因為吞嚥問題不能享受用餐','吞嚥後感覺喉嚨有食物卡著','當我進食的時候會咳嗽','吞嚥讓我感覺緊張有壓力'];
 (function(){var tbody=document.getElementById('eat10Body');eat10Items.forEach(function(item,i){var tr=document.createElement('tr');tr.innerHTML='<td style="padding-left:10px;">'+item+'</td><td style="text-align:center;"><select id="e'+i+'" onchange="updateEat10()" style="width:100px;"><option value="0">0 沒有</option><option value="1">1 很少</option><option value="2">2 偶爾</option><option value="3">3 經常</option><option value="4">4 總是</option></select></td>';tbody.appendChild(tr);});})();
 function updateEat10(){var t=0;eat10Items.forEach(function(_,i){t+=parseInt(document.getElementById('e'+i).value);});document.getElementById('eat10Total').textContent=t;var s=document.getElementById('eat10Status');if(t>=3){s.textContent='注意：可能有吞嚥障礙風險（總分 '+t+' 分）';s.className='score-badge score-warn';}else{s.textContent='正常範圍（總分 '+t+' 分）';s.className='score-badge score-ok';}}
 
+// ==========================================
+// 咀嚼能力篩檢
+// ==========================================
 var chewItems=['硬豆干','炒花生','芭樂（整顆）','炸雞','水煮玉米（整枝）','蘋果／梨子／蓮霧／芭樂（切片）','烤魷魚／雞胗','水煮花枝／滷豬耳朵','柳丁（切片）','竹筍／敏豆／花椰菜／切片小黃瓜','煮熟的紅／白蘿蔔'];
 (function(){var tbody=document.getElementById('chewBody');chewItems.forEach(function(item,i){var tr=document.createElement('tr');tr.innerHTML='<td style="padding-left:10px;">'+item+'</td><td style="text-align:center;"><select id="c'+i+'" onchange="updateChew()" style="width:108px;"><option value="0">容易吃</option><option value="1">有些吃力</option><option value="1">沒辦法吃</option></select></td>';tbody.appendChild(tr);});})();
 function updateChew(){var t=0;chewItems.forEach(function(_,i){if(parseInt(document.getElementById('c'+i).value)>0)t++;});document.getElementById('chewTotal').textContent=t;var s=document.getElementById('chewStatus');if(t>=4){s.textContent='注意：可能有咀嚼障礙風險（'+t+' 種困難）';s.className='score-badge score-warn';}else{s.textContent='正常範圍（'+t+' 種困難）';s.className='score-badge score-ok';}}
 function checkOtherTeeth(){document.getElementById('teethOtherField').style.display=document.getElementById('teethFunc').value==='其他'?'':'none';}
 
+// ==========================================
+// 多選元件（Multiselect）
+// ==========================================
 var msOptions={
   disease:['糖尿病','高血壓','高血脂','心臟病','中風','慢性腎臟病（CKD）','失智症','骨質疏鬆','帕金森氏症','慢性阻塞性肺病（COPD）','癌症','貧血','肝硬化','憂鬱症'],
   eathabit:['湯多','菜多','飯多','淋肉湯','海鮮過敏','素食','無'],
@@ -1045,61 +1172,43 @@ function rebuildDDItems(dd,key){
   msOptions[key].forEach(function(opt,i){
     var item=document.createElement('div');item.className='ms-opt'+(msState[key].has(i)?' sel':'');item.id='mso-'+key+'-'+i;
     var cb='<input type="checkbox" id="mscb-'+key+'-'+i+'"'+(msState[key].has(i)?' checked':'')+' onchange="toggleMSOpt(\''+key+'\','+i+',this.checked)">';
-    
     var moveUp = i > 0 ? '<span class="ms-opt-move" title="上移" onclick="moveMSOption(\''+key+'\','+i+',-1,event)">↑</span>' : '<span class="ms-opt-move disabled">↑</span>';
     var moveDown = i < msOptions[key].length - 1 ? '<span class="ms-opt-move" title="下移" onclick="moveMSOption(\''+key+'\','+i+',1,event)">↓</span>' : '<span class="ms-opt-move disabled">↓</span>';
     var delBtn = '<span class="ms-opt-del" title="刪除選項" onclick="deleteMSOption(\''+key+'\','+i+',event)">×</span>';
-    
     var ctrls = '<div class="ms-opt-ctrls">' + moveUp + moveDown + delBtn + '</div>';
-    
-    item.innerHTML=cb+'<label for="mscb-'+key+'-'+i+'" style="flex:1; cursor:pointer;">'+opt+'</label>' + ctrls;
+    item.innerHTML=cb+'<label for="mscb-'+key+'-'+i+'" style="flex:1; cursor:pointer;">'+opt+'</label>'+ctrls;
     if(msAddable[key]&&existingAdd){dd.insertBefore(item,existingAdd);}else{dd.appendChild(item);}
   });
 }
 
-function moveMSOption(key, index, dir, event) {
+function moveMSOption(key,index,dir,event){
   event.stopPropagation();
-  if(dir === -1 && index === 0) return;
-  if(dir === 1 && index === msOptions[key].length - 1) return;
-
-  var newIndex = index + dir;
-  var temp = msOptions[key][index];
-  msOptions[key][index] = msOptions[key][newIndex];
-  msOptions[key][newIndex] = temp;
-
-  var newState = new Set();
-  msState[key].forEach(function(val) {
-    if(val === index) newState.add(newIndex);
-    else if(val === newIndex) newState.add(index);
+  if(dir===-1&&index===0)return;
+  if(dir===1&&index===msOptions[key].length-1)return;
+  var newIndex=index+dir;
+  var temp=msOptions[key][index];msOptions[key][index]=msOptions[key][newIndex];msOptions[key][newIndex]=temp;
+  var newState=new Set();
+  msState[key].forEach(function(val){
+    if(val===index)newState.add(newIndex);
+    else if(val===newIndex)newState.add(index);
     else newState.add(val);
   });
-  msState[key] = newState;
-
-  var dd = document.getElementById('msdd-'+key);
-  rebuildDDItems(dd, key);
-  updateMSTrigger(key);
-  renderTags(key);
-  updatePrintText(key);
-  
-  saveCloudSettings(); 
+  msState[key]=newState;
+  rebuildDDItems(document.getElementById('msdd-'+key),key);
+  updateMSTrigger(key);renderTags(key);updatePrintText(key);
+  saveCloudSettings();
 }
 
-function deleteMSOption(key, index, event) {
+function deleteMSOption(key,index,event){
   event.stopPropagation();
-  if(!confirm('確定要刪除「' + msOptions[key][index] + '」這個選項嗎？\n(注意：只會影響後續建立的表單，舊表單不受影響)')) return;
-  msOptions[key].splice(index, 1);
-  var newState = new Set();
-  msState[key].forEach(function(i) {
-    if (i < index) newState.add(i);
-    else if (i > index) newState.add(i - 1);
-  });
-  msState[key] = newState;
-  var dd = document.getElementById('msdd-'+key);
-  rebuildDDItems(dd, key);
-  updateMSTrigger(key);
-  renderTags(key);
-  updatePrintText(key);
-  saveCloudSettings(); 
+  if(!confirm('確定要刪除「'+msOptions[key][index]+'」這個選項嗎？'))return;
+  msOptions[key].splice(index,1);
+  var newState=new Set();
+  msState[key].forEach(function(i){if(i<index)newState.add(i);else if(i>index)newState.add(i-1);});
+  msState[key]=newState;
+  rebuildDDItems(document.getElementById('msdd-'+key),key);
+  updateMSTrigger(key);renderTags(key);updatePrintText(key);
+  saveCloudSettings();
 }
 
 function toggleMSOpt(key,i,checked){
@@ -1114,10 +1223,10 @@ function addMSOption(key){
   msOptions[key].push(val);
   var i=msOptions[key].length-1;
   msState[key].add(i);
-  var dd=document.getElementById('msdd-'+key);rebuildDDItems(dd,key);
+  rebuildDDItems(document.getElementById('msdd-'+key),key);
   updateMSTrigger(key);renderTags(key);updatePrintText(key);
   inp.value='';
-  saveCloudSettings(); 
+  saveCloudSettings();
 }
 
 function toggleMS(key){
@@ -1156,80 +1265,89 @@ function updatePrintText(key){
 function updateAllPrintText(){
   ['disease','eathabit','diet','overall'].forEach(function(k){updatePrintText(k);});
 }
-document.addEventListener('click',function(e){if(!e.target.closest('.multiselect-wrap')){document.querySelectorAll('.ms-dd.open,.ms-trigger.open,.ms-arrow.open').forEach(function(el){el.classList.remove('open');});}});
+document.addEventListener('click',function(e){
+  if(!e.target.closest('.multiselect-wrap')){
+    document.querySelectorAll('.ms-dd.open,.ms-trigger.open,.ms-arrow.open').forEach(function(el){el.classList.remove('open');});
+  }
+});
 
 // ==========================================
-// 全同步表單載入邏輯 
+// 表單資料載入
 // ==========================================
-function applyFormDataSync(d, isBatchPrint = false){
+function applyFormDataSync(d, isBatchPrint){
+  isBatchPrint = isBatchPrint || false;
   if(d.org){
     document.getElementById('orgSelect').value = d.org;
     if(isBatchPrint) {
       var sel = document.getElementById('nameSelect');
       sel.innerHTML = '<option value="">── 請選擇姓名 ──</option>';
-      (members[d.org] || []).forEach(n => { var o = document.createElement('option'); o.value = n; o.textContent = n; sel.appendChild(o); });
+      (members[d.org] || []).forEach(function(n) {
+        var o = document.createElement('option'); o.value = n; o.textContent = n; sel.appendChild(o);
+      });
     } else {
       onOrgChange();
     }
   }
-  
   if(d.name) document.getElementById('nameSelect').value = d.name;
-  
-  if(d.gender)document.getElementById('gender').value=d.gender;
-  if(d.age)document.getElementById('age').value=d.age;
-  if(d.height)document.getElementById('height').value=d.height;
-  if(d.weight)document.getElementById('weight').value=d.weight;
+  if(d.gender) document.getElementById('gender').value=d.gender;
+  if(d.age) document.getElementById('age').value=d.age;
+  if(d.height) document.getElementById('height').value=d.height;
+  if(d.weight) document.getElementById('weight').value=d.weight;
   calcBMI();
-  if(d.vision)document.getElementById('vision').value=d.vision;
-  if(d.hearing)document.getElementById('hearing').value=d.hearing;
-  if(d.cognition)document.getElementById('cognition').value=d.cognition;
-  
-  if(d.cheekPuff)document.getElementById('cheekPuff').value=d.cheekPuff;
-  if(d.cheekPuffOther)document.getElementById('cheekPuffOther').value=d.cheekPuffOther;
+  if(d.vision) document.getElementById('vision').value=d.vision;
+  if(d.hearing) document.getElementById('hearing').value=d.hearing;
+  if(d.cognition) document.getElementById('cognition').value=d.cognition;
+  if(d.cheekPuff) document.getElementById('cheekPuff').value=d.cheekPuff;
+  if(d.cheekPuffOther) document.getElementById('cheekPuffOther').value=d.cheekPuffOther;
   checkCheekPuff();
-  if(d.tongueFlex)document.getElementById('tongueFlex').value=d.tongueFlex;
-  if(d.tongueFlexOther)document.getElementById('tongueFlexOther').value=d.tongueFlexOther;
+  if(d.tongueFlex) document.getElementById('tongueFlex').value=d.tongueFlex;
+  if(d.tongueFlexOther) document.getElementById('tongueFlexOther').value=d.tongueFlexOther;
   checkTongueFlex();
-  
-  if(d.eat10Remark)document.getElementById('eat10Remark').value=d.eat10Remark;
-  if(d.eat10RemarkOther)document.getElementById('eat10RemarkOther').value=d.eat10RemarkOther;
+  if(d.eat10Remark) document.getElementById('eat10Remark').value=d.eat10Remark;
+  if(d.eat10RemarkOther) document.getElementById('eat10RemarkOther').value=d.eat10RemarkOther;
   checkEat10Remark();
-  if(d.eat10)d.eat10.forEach(function(v,i){var el=document.getElementById('e'+i);if(el)el.value=v;});updateEat10();
-  
-  if(d.teethFunc)document.getElementById('teethFunc').value=d.teethFunc;
-  if(d.teethOther)document.getElementById('teethOther').value=d.teethOther;checkOtherTeeth();
-  
-  if(d.chewRemark)document.getElementById('chewRemark').value=d.chewRemark;
-  if(d.chewRemarkOther)document.getElementById('chewRemarkOther').value=d.chewRemarkOther;
+  if(d.eat10) d.eat10.forEach(function(v,i){var el=document.getElementById('e'+i);if(el)el.value=v;});
+  updateEat10();
+  if(d.teethFunc) document.getElementById('teethFunc').value=d.teethFunc;
+  if(d.teethOther) document.getElementById('teethOther').value=d.teethOther;
+  checkOtherTeeth();
+  if(d.chewRemark) document.getElementById('chewRemark').value=d.chewRemark;
+  if(d.chewRemarkOther) document.getElementById('chewRemarkOther').value=d.chewRemarkOther;
   checkChewRemark();
-  if(d.chew)d.chew.forEach(function(v,i){var el=document.getElementById('c'+i);if(el)el.value=v;});updateChew();
-  
-  if(d.dietHabit)document.getElementById('dietHabit').value=d.dietHabit;
-  if(d.mealTime)document.getElementById('mealTime').value=d.mealTime;
-  if(d.noteText)document.getElementById('noteText').value=d.noteText;
-  if(d.signature)document.getElementById('signature').value=d.signature;
-  if(d.assessDate)document.getElementById('assessDate').value=d.assessDate;
-  
+  if(d.chew) d.chew.forEach(function(v,i){var el=document.getElementById('c'+i);if(el)el.value=v;});
+  updateChew();
+  if(d.dietHabit) document.getElementById('dietHabit').value=d.dietHabit;
+  if(d.mealTime) document.getElementById('mealTime').value=d.mealTime;
+  if(d.noteText) document.getElementById('noteText').value=d.noteText;
+  if(d.signature) document.getElementById('signature').value=d.signature;
+  if(d.assessDate) document.getElementById('assessDate').value=d.assessDate;
   ['disease','eathabit','diet','overall'].forEach(function(k){
-    if(d.msOpts&&d.msOpts[k])msOptions[k]=d.msOpts[k];
+    if(d.msOpts&&d.msOpts[k]) msOptions[k]=d.msOpts[k];
     msState[k].clear();buildMS('ms-'+k,k);
     if(d.msSelected&&d.msSelected[k]){
       d.msSelected[k].forEach(function(i){
         msState[k].add(i);
-        var cb=document.getElementById('mscb-'+k+'-'+i);if(cb){cb.checked=true;var opt=document.getElementById('mso-'+k+'-'+i);if(opt)opt.classList.add('sel');}
+        var cb=document.getElementById('mscb-'+k+'-'+i);
+        if(cb){cb.checked=true;var opt=document.getElementById('mso-'+k+'-'+i);if(opt)opt.classList.add('sel');}
       });
       updateMSTrigger(k);renderTags(k);updatePrintText(k);
     }
   });
 }
 
-function exportJSON(){var data=collectFormData();var name=(data.name||'未命名')+'_評估表_'+(data.assessDate||new Date().toISOString().split('T')[0]);downloadJSON(data,name+'.json');}
-function downloadJSON(data,filename){var blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename;document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(a.href);}
+function exportJSON(){
+  var data=collectFormData();
+  var name=(data.name||'未命名')+'_評估表_'+(data.assessDate||new Date().toISOString().split('T')[0]);
+  var blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name+'.json';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(a.href);
+}
 
-// 初始設定
+// ==========================================
+// 初始化
+// ==========================================
 ['disease','eathabit','diet','overall'].forEach(function(k){buildMS('ms-'+k,k);});
 document.getElementById('assessDate').value=new Date().toISOString().split('T')[0];
-
 </script>
 </body>
 </html>
