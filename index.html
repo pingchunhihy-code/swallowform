@@ -132,17 +132,17 @@ tr:hover td{background:#fafaf8;}
 
 /* ★★★ 列印版面極致壓縮 ★★★ */
 @media print{
-  @page{size:A4;margin:8mm 10mm;} /* 縮小頁邊距 */
-  body{background:#fff;padding:0;font-size:12px;line-height:1.35;} /* 字體縮小為 12px，行高壓縮 */
+  @page{size:A4;margin:8mm 10mm;} 
+  body{background:#fff;padding:0;font-size:12px;line-height:1.35;} 
   .form-wrap{box-shadow:none;padding:0;border-radius:0;max-width:100%;}
   .form-header{padding-bottom:2px;margin-bottom:4px;}
   .form-header .sub-title{font-size:12px;margin-top:0;}
   .org-select{font-size:15px;border-bottom:1px solid #666;padding:0;}
   .mgr-btn,.logout-btn,.btn-row,.overlay,.records-bar{display:none!important;}
   
-  .section{padding:.3rem .5rem;margin-bottom:.3rem;border:1px solid #aaa;border-radius:3px;page-break-inside:avoid;} /* 區塊內縮壓縮 */
+  .section{padding:.3rem .5rem;margin-bottom:.3rem;border:1px solid #aaa;border-radius:3px;page-break-inside:avoid;} 
   .section-title{font-size:13px;margin-bottom:4px;padding:3px 6px;background:#eee;border-left:3px solid #666;}
-  .field-row{gap:4px;margin-bottom:4px;} /* 欄位間距壓縮 */
+  .field-row{gap:4px;margin-bottom:4px;} 
   .field label{font-size:10px;margin-bottom:1px;}
   input,select,textarea{font-size:12px;padding:2px 4px;background:#fff;border:1px solid #aaa;}
   
@@ -157,10 +157,7 @@ tr:hover td{background:#fafaf8;}
   .print-disease{display:block;font-size:12px;color:#000;padding:2px 0;line-height:1.4;}
   .score-badge{font-size:11px;padding:1px 6px;}
   
-  /* 針對提示文字壓縮 */
   p {margin-bottom: 2px!important; font-size:11px!important;}
-  
-  /* 確保隱藏背景顏色的列印問題 */
   .field-row[style*="background"] { background:transparent!important; border:none!important; padding:0!important;}
 }
 </style>
@@ -585,6 +582,8 @@ function saveRecord() {
     alert('✅ 已成功儲存至雲端：\n【' + currentOrgName() + '】' + key);
     renderRecordSelect();
     setTimeout(() => { document.getElementById('recordSelect').value = key; }, 500);
+    // 儲存成功後，畫面平滑滾動回頂部
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }).catch(err => { alert("儲存失敗：" + err.message); });
 }
 
@@ -1120,4 +1119,4 @@ document.getElementById('assessDate').value=new Date().toISOString().split('T')[
 
 </script>
 </body>
-</html>
+</html>有辦法設計長者在A長照機構 到時候被換去B長照機構 所以評估表要跟著去B日照機構 也就是把評估表選取A長者後按一顆移動至哪間機構呢?
