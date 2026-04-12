@@ -155,6 +155,12 @@ tr:hover td{background:#fafaf8;}
   #batchPrintArea { display:block!important; width:100%; }
   #batchPrintArea .form-wrap { display:block!important; page-break-after: always; margin-bottom:0; box-shadow:none; }
   #batchPrintArea .form-wrap:last-child { page-break-after: auto; }
+  
+  /* 隱藏列印時的 placeholder 提示文字 */
+  ::-webkit-input-placeholder { color: transparent !important; }
+  :-moz-placeholder { color: transparent !important; }
+  ::-moz-placeholder { color: transparent !important; }
+  :-ms-input-placeholder { color: transparent !important; }
 }
 </style>
 </head>
@@ -359,7 +365,6 @@ tr:hover td{background:#fafaf8;}
 </div>
 </div>
 
-<!-- Print Modal -->
 <div class="overlay" id="printOverlay" onclick="overlayClick(event, 'printOverlay')">
   <div class="modal" style="width:500px;">
     <div class="modal-title">
@@ -383,7 +388,6 @@ tr:hover td{background:#fafaf8;}
   </div>
 </div>
 
-<!-- Transfer Modal -->
 <div class="overlay" id="transferOverlay" onclick="overlayClick(event, 'transferOverlay')">
   <div class="modal" style="width:400px;">
     <div class="modal-title">
@@ -399,7 +403,6 @@ tr:hover td{background:#fafaf8;}
   </div>
 </div>
 
-<!-- Manager Modal -->
 <div class="overlay" id="mgrOverlay" onclick="overlayClick(event, 'mgrOverlay')">
   <div class="modal">
     <div class="modal-title">
@@ -444,7 +447,6 @@ tr:hover td{background:#fafaf8;}
   </div>
 </div>
 
-<!-- Dashboard Modal -->
 <div class="overlay" id="dashOverlay" onclick="overlayClick(event, 'dashOverlay')">
   <div class="modal" style="width:750px;">
     <div class="modal-title">
@@ -673,7 +675,7 @@ function clearFormKeepIdentity(){
 }
 
 // ==========================================
-// ★ 修正一：新增缺失的 collectFormData 函式
+// 修正一：新增缺失的 collectFormData 函式
 // ==========================================
 function collectFormData() {
   var eat10 = eat10Items.map(function(_, i) {
@@ -721,7 +723,7 @@ function collectFormData() {
 }
 
 // ==========================================
-// ★ 修正二：新增缺失的 resetForm 函式
+// 修正二：新增缺失的 resetForm 函式
 // ==========================================
 function resetForm(shouldRefreshRecords) {
   document.getElementById('nameSelect').selectedIndex = 0;
@@ -1272,13 +1274,13 @@ document.addEventListener('click',function(e){
 });
 
 // ==========================================
-// 表單資料載入
+// 表單資料載入 (修復相容性問題)
 // ==========================================
 function applyFormDataSync(d, isBatchPrint){
-  isBatchPrint = isBatchPrint || false;
+  var _isBatchPrint = typeof isBatchPrint !== 'undefined' ? isBatchPrint : false;
   if(d.org){
     document.getElementById('orgSelect').value = d.org;
-    if(isBatchPrint) {
+    if(_isBatchPrint) {
       var sel = document.getElementById('nameSelect');
       sel.innerHTML = '<option value="">── 請選擇姓名 ──</option>';
       (members[d.org] || []).forEach(function(n) {
@@ -1333,14 +1335,6 @@ function applyFormDataSync(d, isBatchPrint){
       updateMSTrigger(k);renderTags(k);updatePrintText(k);
     }
   });
-}
-
-function exportJSON(){
-  var data=collectFormData();
-  var name=(data.name||'未命名')+'_評估表_'+(data.assessDate||new Date().toISOString().split('T')[0]);
-  var blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
-  var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name+'.json';
-  document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(a.href);
 }
 
 // ==========================================
