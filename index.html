@@ -159,6 +159,11 @@ tr:hover td{background:#fafaf8;}
   
   p {margin-bottom: 2px!important; font-size:11px!important;}
   .field-row[style*="background"] { background:transparent!important; border:none!important; padding:0!important;}
+
+  /* 批次列印時的設定 */
+  #batchPrintArea { display:block!important; width:100%; }
+  #batchPrintArea .form-wrap { display:block!important; page-break-after: always; margin-bottom:0; box-shadow:none; }
+  #batchPrintArea .form-wrap:last-child { page-break-after: auto; }
 }
 </style>
 </head>
@@ -173,7 +178,7 @@ tr:hover td{background:#fafaf8;}
   </div>
 </div>
 
-<div class="form-wrap">
+<div class="form-wrap" id="mainFormWrap">
 
 <div class="form-header">
   <button class="logout-btn" onclick="doLogout()">🚪 登出</button>
@@ -202,7 +207,13 @@ tr:hover td{background:#fafaf8;}
 <div class="section">
   <div class="section-title">一、基本資料</div>
   <div class="field-row">
-    <div class="field"><label>姓名</label><select id="nameSelect" onchange="onNameChange()"><option value="">── 請先選擇機構 ──</option></select></div>
+    <div class="field" style="flex-direction:row; align-items:flex-end; gap:8px;">
+      <div style="flex:1;">
+        <label>姓名</label>
+        <select id="nameSelect" onchange="onNameChange()"><option value="">── 請先選擇機構 ──</option></select>
+      </div>
+      <button class="dash-action-btn" style="height:28px; margin-bottom:1px; padding:0 10px;" onclick="openTransferModal()">🔄 轉出</button>
+    </div>
     <div class="field"><label>性別</label><select id="gender"><option>男</option><option>女</option></select></div>
     <div class="field"><label>年齡</label><input type="number" id="age" placeholder="歲" min="0" max="120"></div>
   </div>
@@ -351,10 +362,53 @@ tr:hover td{background:#fafaf8;}
 
 <div class="btn-row" style="margin-top:1.5rem; padding-top:1rem; border-top:1px solid #e8e8e8; align-items:center;">
   <button class="save-btn" onclick="saveRecord()" style="font-size:14px; padding:10px 24px; background:#0C447C; box-shadow:0 4px 10px rgba(12,68,124,0.3);">💾 儲存至雲端</button>
-  <button class="print-btn" onclick="doPrint()">列印 / 匯出 PDF</button>
+  <button class="print-btn" onclick="openPrintModal()">🖨️ 批次列印 / 匯出 PDF</button>
   <button class="json-btn" onclick="exportJSON()">↓ 匯出備份檔</button>
   <button class="reset-btn" onclick="resetForm()">清除重填</button>
 </div>
+</div>
+
+<div class="overlay" id="printOverlay" onclick="overlayClick(event, 'printOverlay')">
+  <div class="modal" style="width:500px;">
+    <div class="modal-title">
+      <span>🖨️ 批次列印 / 匯出 PDF</span>
+      <span class="modal-close" onclick="closePrintModal()">×</span>
+    </div>
+    
+    <div style="margin-bottom:15px;">
+      <button class="print-btn" onclick="doPrintSingle()" style="width:100%; background:#085041; margin-bottom:10px;">📄 僅列印當前畫面</button>
+    </div>
+    
+    <div style="border-top:1px solid #e8e8e8; margin-top:15px; padding-top:15px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <span style="font-weight:bold; color:#185FA5;">☑️ 勾選欲列印的雲端個案</span>
+        <div>
+          <button class="dash-action-btn" onclick="selectAllPrint(true)">全選</button>
+          <button class="dash-action-btn" onclick="selectAllPrint(false)">全不選</button>
+        </div>
+      </div>
+      
+      <div id="printChecklist" style="max-height:250px; overflow-y:auto; border:1px solid #d0d0c8; border-radius:6px; padding:10px; background:#fafaf8; display:flex; flex-direction:column; gap:8px;">
+        </div>
+      
+      <button class="print-btn" onclick="doBatchPrint()" style="width:100%; margin-top:15px;">🖨️ 列印已勾選的評估表</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="transferOverlay" onclick="overlayClick(event, 'transferOverlay')">
+  <div class="modal" style="width:400px;">
+    <div class="modal-title">
+      <span>🔄 個案轉出機構</span>
+      <span class="modal-close" onclick="document.getElementById('transferOverlay').classList.remove('show')">×</span>
+    </div>
+    <p style="font-size:13px; margin-bottom:10px;">即將轉出長輩：<strong id="transferTargetName" style="color:#185FA5; font-size:16px;"></strong></p>
+    <div class="field" style="margin-bottom:20px;">
+       <label>選擇轉出的目標機構</label>
+       <select id="transferOrgSelect" style="font-size:14px; padding:8px;"></select>
+    </div>
+    <button class="save-btn" style="width:100%;" onclick="doTransfer()">確認轉出</button>
+  </div>
 </div>
 
 <div class="overlay" id="mgrOverlay" onclick="overlayClick(event, 'mgrOverlay')">
@@ -582,7 +636,6 @@ function saveRecord() {
     alert('✅ 已成功儲存至雲端：\n【' + currentOrgName() + '】' + key);
     renderRecordSelect();
     setTimeout(() => { document.getElementById('recordSelect').value = key; }, 500);
-    // 儲存成功後，畫面平滑滾動回頂部
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }).catch(err => { alert("儲存失敗：" + err.message); });
 }
@@ -596,7 +649,7 @@ function loadRecord() {
   
   db.collection("records").doc(docId).get().then(doc => {
     if (doc.exists) {
-      applyFormData(doc.data().data);
+      applyFormDataSync(doc.data().data);
     } else {
       alert('在雲端找不到此個案');
     }
@@ -612,11 +665,12 @@ function deleteRecord() {
   
   db.collection("records").doc(docId).delete().then(() => {
     renderRecordSelect();
-    resetForm();
+    resetForm(false);
     alert("🗑️ 已從雲端永久刪除");
   }).catch(err => alert("刪除失敗：" + err.message));
 }
 
+// 自動清空並保留身分
 function onNameChange() {
   var n = document.getElementById('nameSelect').value;
   if (!n) return;
@@ -626,19 +680,182 @@ function onNameChange() {
 function clearFormKeepIdentity(){
   ['age','height','weight','signature','cheekPuffOther','tongueFlexOther','eat10RemarkOther','chewRemarkOther'].forEach(function(id){document.getElementById(id).value='';});
   ['gender','vision','hearing','cognition','cheekPuff','tongueFlex','eat10Remark','chewRemark','teethFunc','dietHabit','mealTime'].forEach(function(id){document.getElementById(id).selectedIndex=0;});
-  
   document.getElementById('bmiDisplay').textContent='—';document.getElementById('bmiDisplay').className='bmi-badge';
   document.getElementById('noteText').value='';
-  
   eat10Items.forEach(function(_,i){document.getElementById('e'+i).selectedIndex=0;});updateEat10();
   chewItems.forEach(function(_,i){document.getElementById('c'+i).selectedIndex=0;});updateChew();
   document.getElementById('teethOtherField').style.display='none';
-  
   checkCheekPuff(); checkTongueFlex(); checkEat10Remark(); checkChewRemark();
-  
   ['disease','eathabit','diet','overall'].forEach(function(key){msState[key].clear();buildMS('ms-'+key,key);updatePrintText(key);});
-  
   document.getElementById('recordSelect').value = '';
+}
+
+// ==========================================
+// 🖨️ 批次列印 PDF 邏輯
+// ==========================================
+function openPrintModal() {
+  let orgId = currentOrgId();
+  if(!orgId || orgId === '__none__') {
+      doPrintSingle();
+      return;
+  }
+  let listDiv = document.getElementById('printChecklist');
+  listDiv.innerHTML = '';
+  
+  if(allCurrentOrgRecords.length === 0) {
+      listDiv.innerHTML = '<div style="color:#999; font-size:12px; text-align:center;">目前機構無雲端資料</div>';
+  } else {
+      allCurrentOrgRecords.forEach(rec => {
+          let label = document.createElement('label');
+          label.style.display = 'flex'; label.style.alignItems = 'center'; label.style.gap = '8px'; label.style.cursor = 'pointer'; label.style.fontSize = '13px';
+          let cb = document.createElement('input');
+          cb.type = 'checkbox'; cb.className = 'print-cb'; cb.value = rec.recordKey;
+          
+          let curKey = document.getElementById('recordSelect').value;
+          if(rec.recordKey === curKey) cb.checked = true;
+          
+          label.appendChild(cb);
+          label.appendChild(document.createTextNode(rec.recordKey));
+          listDiv.appendChild(label);
+      });
+  }
+  document.getElementById('printOverlay').classList.add('show');
+}
+
+function closePrintModal() { document.getElementById('printOverlay').classList.remove('show'); }
+
+function selectAllPrint(check) {
+  document.querySelectorAll('.print-cb').forEach(cb => cb.checked = check);
+}
+
+function doPrintSingle() {
+  updateAllPrintText();
+  window.print();
+}
+
+async function doBatchPrint() {
+  let selectedKeys = Array.from(document.querySelectorAll('.print-cb:checked')).map(cb => cb.value);
+  if(selectedKeys.length === 0) return alert("請勾選至少一筆資料");
+  
+  closePrintModal();
+  
+  // 1. 備份當前畫面資料
+  let backupData = collectFormData();
+  let backupOrg = document.getElementById('orgSelect').value;
+  let backupRec = document.getElementById('recordSelect').value;
+  
+  // 2. 建立隱藏的列印區塊
+  let printArea = document.createElement('div');
+  printArea.id = 'batchPrintArea';
+  document.body.appendChild(printArea);
+  
+  // 3. 隱藏原本的 UI
+  document.getElementById('mainFormWrap').style.display = 'none';
+  
+  // 4. 依序產生勾選的表單
+  for (let i = 0; i < selectedKeys.length; i++) {
+      let key = selectedKeys[i];
+      let rec = allCurrentOrgRecords.find(r => r.recordKey === key);
+      if(rec) {
+          resetForm(false);
+          applyFormDataSync(rec.data);
+          updateAllPrintText();
+          
+          let clone = document.getElementById('mainFormWrap').cloneNode(true);
+          clone.id = ''; 
+          clone.style.display = 'block';
+          
+          // 修復 cloneNode 無法複製 select 與 checkbox 動態狀態的問題
+          let oSel = document.getElementById('mainFormWrap').querySelectorAll('select');
+          let cSel = clone.querySelectorAll('select');
+          oSel.forEach((s, idx) => cSel[idx].value = s.value);
+          
+          let oInp = document.getElementById('mainFormWrap').querySelectorAll('input, textarea');
+          let cInp = clone.querySelectorAll('input, textarea');
+          oInp.forEach((inp, idx) => {
+               if(inp.type === 'checkbox' || inp.type === 'radio') cInp[idx].checked = inp.checked;
+               else cInp[idx].value = inp.value;
+          });
+          
+          // 移除不需要印出的按鈕
+          clone.querySelectorAll('.btn-row, .records-bar, .form-header button').forEach(b => b.remove());
+          
+          printArea.appendChild(clone);
+      }
+  }
+  
+  // 5. 呼叫列印
+  window.print();
+  
+  // 6. 清理並還原畫面
+  printArea.remove();
+  document.getElementById('mainFormWrap').style.display = 'block';
+  resetForm(false);
+  if(backupOrg) {
+      document.getElementById('orgSelect').value = backupOrg;
+      onOrgChange();
+  }
+  applyFormDataSync(backupData);
+  document.getElementById('recordSelect').value = backupRec;
+}
+
+// ==========================================
+// 🔄 機構轉出邏輯
+// ==========================================
+function openTransferModal() {
+  let name = document.getElementById('nameSelect').value;
+  let curOrgId = currentOrgId();
+  if(!name || curOrgId === '__none__') return alert("請先選擇要轉出的長輩姓名！");
+  
+  document.getElementById('transferTargetName').textContent = name;
+  let sel = document.getElementById('transferOrgSelect');
+  sel.innerHTML = '<option value="">-- 請選擇 --</option>';
+  orgs.forEach(o => {
+      if(o.id !== curOrgId) {
+          sel.appendChild(new Option(o.name, o.id));
+      }
+  });
+  document.getElementById('transferOverlay').classList.add('show');
+}
+
+async function doTransfer() {
+  let targetOrgId = document.getElementById('transferOrgSelect').value;
+  let curOrgId = currentOrgId();
+  let name = document.getElementById('nameSelect').value;
+  
+  if(!targetOrgId) return alert("請選擇目標機構");
+  
+  // 1. 移動名單設定
+  members[curOrgId] = members[curOrgId].filter(n => n !== name);
+  if(!members[targetOrgId]) members[targetOrgId] = [];
+  if(!members[targetOrgId].includes(name)) members[targetOrgId].push(name);
+  saveCloudSettings();
+  
+  // 2. 移動雲端紀錄
+  let snapshot = await db.collection("records").where("orgId", "==", curOrgId).get();
+  let batch = db.batch();
+  
+  snapshot.forEach(doc => {
+      let data = doc.data();
+      if(data.data && data.data.name === name) {
+          let oldRef = db.collection("records").doc(doc.id);
+          batch.delete(oldRef); // 刪除舊紀錄
+          
+          data.orgId = targetOrgId;
+          data.data.org = targetOrgId;
+          let newDocId = targetOrgId + "___" + data.recordKey;
+          let newRef = db.collection("records").doc(newDocId);
+          batch.set(newRef, data); // 建立新紀錄
+      }
+  });
+  
+  await batch.commit();
+  alert(`✅ 已成功將「${name}」的所有資料轉出至新機構！`);
+  document.getElementById('transferOverlay').classList.remove('show');
+  
+  // 重新整理畫面
+  onOrgChange(); 
+  resetForm(false);
 }
 
 // ==========================================
@@ -925,119 +1142,12 @@ function updateAllPrintText(){
 }
 document.addEventListener('click',function(e){if(!e.target.closest('.multiselect-wrap')){document.querySelectorAll('.ms-dd.open,.ms-trigger.open,.ms-arrow.open').forEach(function(el){el.classList.remove('open');});}});
 
-function doPrint(){updateAllPrintText();window.print();}
-
 // ==========================================
-// 機構管理 UI
+// 全同步表單載入邏輯 (修復批次列印時的節點抓取問題)
 // ==========================================
-function openMgr(){mgrActiveOrg=orgs.length>0?orgs[0].id:null;renderMgr();document.getElementById('mgrOverlay').classList.add('show');}
-function closeMgr(){document.getElementById('mgrOverlay').classList.remove('show');}
-function overlayClick(e, id){if(e.target===document.getElementById(id)) document.getElementById(id).classList.remove('show');}
-function switchMemberTab(tab){
-  document.getElementById('tabSingle').classList.toggle('active',tab==='single');
-  document.getElementById('tabBatch').classList.toggle('active',tab==='batch');
-  document.getElementById('panelSingle').classList.toggle('active',tab==='single');
-  document.getElementById('panelBatch').classList.toggle('active',tab==='batch');
-  document.getElementById('batchResult').textContent='';
-}
-function renderMgr(){
-  var orgList=document.getElementById('orgList');orgList.innerHTML='';
-  orgs.forEach(function(o){
-    var row=document.createElement('div');row.className='mgr-row';
-    var inp=document.createElement('input');inp.type='text';inp.value=o.name;
-    inp.onchange=function(){o.name=this.value;};
-    var btn=document.createElement('button');btn.className='del-btn';btn.textContent='刪除';
-    btn.onclick=function(){deleteOrg(o.id);};
-    row.appendChild(inp);row.appendChild(btn);orgList.appendChild(row);
-  });
-  var tabs=document.getElementById('orgTabs');tabs.innerHTML='';
-  orgs.forEach(function(o){
-    var tab=document.createElement('div');tab.className='org-tab'+(o.id===mgrActiveOrg?' active':'');
-    tab.textContent=o.name.replace(/（.*?）/g,'');
-    tab.onclick=function(){mgrActiveOrg=o.id;renderMgr();document.getElementById('batchResult').textContent='';};
-    tabs.appendChild(tab);
-  });
-  var ml=document.getElementById('memberList');ml.innerHTML='';
-  if(mgrActiveOrg){
-    if(!members[mgrActiveOrg])members[mgrActiveOrg]=[];
-    members[mgrActiveOrg].forEach(function(m,i){
-      var row=document.createElement('div');row.className='mgr-row';
-      var inp=document.createElement('input');inp.type='text';inp.value=m;
-      (function(idx){inp.onchange=function(){members[mgrActiveOrg][idx]=this.value;};})(i);
-      var btn=document.createElement('button');btn.className='del-btn';btn.textContent='刪除';
-      (function(idx){btn.onclick=function(){deleteMember(mgrActiveOrg,idx);};})(i);
-      row.appendChild(inp);row.appendChild(btn);ml.appendChild(row);
-    });
-  }
-}
-function addOrg(){var input=document.getElementById('newOrgName'),name=input.value.trim();if(!name){alert('請輸入機構名稱');return;}var id='ORG_'+Date.now();orgs.push({id:id,name:name});members[id]=[];input.value='';mgrActiveOrg=id;renderMgr();}
-function deleteOrg(id){if(!confirm('確定刪除此機構？'))return;orgs=orgs.filter(function(o){return o.id!==id;});delete members[id];mgrActiveOrg=orgs.length>0?orgs[0].id:null;renderMgr();}
-function addMember(){var input=document.getElementById('newMemberName'),name=input.value.trim();if(!name)return;if(!mgrActiveOrg)return;if(!members[mgrActiveOrg])members[mgrActiveOrg]=[];members[mgrActiveOrg].push(name);input.value='';renderMgr();}
-function deleteMember(orgId,idx){members[orgId].splice(idx,1);renderMgr();}
-function batchAddMembers(){if(!mgrActiveOrg){alert('請先選擇機構');return;}var raw=document.getElementById('batchInput').value;var names=raw.split('\n').map(function(s){return s.trim();}).filter(function(s){return s.length>0;});if(names.length===0){alert('請輸入姓名');return;}if(!members[mgrActiveOrg])members[mgrActiveOrg]=[];names.forEach(function(n){members[mgrActiveOrg].push(n);});document.getElementById('batchInput').value='';document.getElementById('batchResult').textContent='已新增 '+names.length+' 位。';renderMgr();}
-function replaceMembers(){if(!mgrActiveOrg){alert('請先選擇機構');return;}var raw=document.getElementById('batchInput').value;var names=raw.split('\n').map(function(s){return s.trim();}).filter(function(s){return s.length>0;});if(names.length===0){alert('請輸入姓名');return;}if(!confirm('確定取代現有名單？'))return;members[mgrActiveOrg]=names;document.getElementById('batchInput').value='';document.getElementById('batchResult').textContent='已取代為 '+names.length+' 位。';renderMgr();}
-
-function saveMgr(){
-  saveCloudSettings(); 
-  var curOrgId=document.getElementById('orgSelect').value;
-  var curName=document.getElementById('nameSelect').value;
-  closeMgr();
-  renderOrgSelect();
-  if(!curOrgId && mgrActiveOrg){ document.getElementById('orgSelect').value=mgrActiveOrg; }
-  onOrgChange();
-  if(curName){
-    var ns=document.getElementById('nameSelect');
-    for(var i=0;i<ns.options.length;i++){
-      if(ns.options[i].value===curName){ns.value=curName;break;}
-    }
-  }
-}
-
-// ==========================================
-// 表單資料收集與套用
-// ==========================================
-function collectFormData(){
-  var eat10Vals=[],chewVals=[];
-  eat10Items.forEach(function(_,i){eat10Vals.push(parseInt(document.getElementById('e'+i).value));});
-  chewItems.forEach(function(_,i){chewVals.push(parseInt(document.getElementById('c'+i).value));});
-  var msSelected={},msOpts={};
-  ['disease','eathabit','diet','overall'].forEach(function(k){msSelected[k]=Array.from(msState[k]);msOpts[k]=msOptions[k].slice();});
-  return {
-    exportedAt:new Date().toISOString(),
-    org:document.getElementById('orgSelect').value,
-    name:document.getElementById('nameSelect').value,
-    gender:document.getElementById('gender').value,
-    age:document.getElementById('age').value,
-    height:document.getElementById('height').value,
-    weight:document.getElementById('weight').value,
-    vision:document.getElementById('vision').value,
-    hearing:document.getElementById('hearing').value,
-    cognition:document.getElementById('cognition').value,
-    cheekPuff:document.getElementById('cheekPuff').value,
-    cheekPuffOther:document.getElementById('cheekPuffOther').value,
-    tongueFlex:document.getElementById('tongueFlex').value,
-    tongueFlexOther:document.getElementById('tongueFlexOther').value,
-    eat10Remark:document.getElementById('eat10Remark').value,
-    eat10RemarkOther:document.getElementById('eat10RemarkOther').value,
-    eat10:eat10Vals,
-    teethFunc:document.getElementById('teethFunc').value,
-    teethOther:document.getElementById('teethOther').value,
-    chewRemark:document.getElementById('chewRemark').value,
-    chewRemarkOther:document.getElementById('chewRemarkOther').value,
-    chew:chewVals,
-    dietHabit:document.getElementById('dietHabit').value,
-    mealTime:document.getElementById('mealTime').value,
-    msSelected:msSelected,
-    msOpts:msOpts,
-    noteText:document.getElementById('noteText').value,
-    signature:document.getElementById('signature').value,
-    assessDate:document.getElementById('assessDate').value
-  };
-}
-
-function applyFormData(d){
-  if(d.org){document.getElementById('orgSelect').value=d.org;onOrgChange();}
-  setTimeout(function(){if(d.name)document.getElementById('nameSelect').value=d.name;},50);
+function applyFormDataSync(d){
+  if(d.org){document.getElementById('orgSelect').value=d.org; onOrgChange();}
+  if(d.name)document.getElementById('nameSelect').value=d.name;
   if(d.gender)document.getElementById('gender').value=d.gender;
   if(d.age)document.getElementById('age').value=d.age;
   if(d.height)document.getElementById('height').value=d.height;
@@ -1119,4 +1229,4 @@ document.getElementById('assessDate').value=new Date().toISOString().split('T')[
 
 </script>
 </body>
-</html>有辦法設計長者在A長照機構 到時候被換去B長照機構 所以評估表要跟著去B日照機構 也就是把評估表選取A長者後按一顆移動至哪間機構呢?
+</html>
