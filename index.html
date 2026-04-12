@@ -288,9 +288,9 @@ tr:hover td{background:#fafaf8;}
   <div class="section-title">三、咀嚼能力篩檢表</div>
   <div class="field-row" style="margin-bottom:7px;">
     <div class="field"><label>牙齒功能</label>
-      <select id="teethFunc" onchange="checkOtherTeeth()"><option value="">請選擇</option><option>完整</option><option>缺牙</option><option>無牙</option><option>假牙</option><option>部份缺牙</option><option>其他</option></select>
+      <select id="teethFunc"><option value="">請選擇</option><option>完整</option><option>缺牙</option><option>無牙</option><option>假牙</option><option>部份缺牙</option><option>其他</option></select>
     </div>
-    <div class="field" id="teethOtherField" style="display:none;"><label>其他說明</label><input type="text" id="teethOther" placeholder="請輸入"></div>
+    <div class="field" id="teethOtherField"><label>牙齒狀況說明 (可選)</label><input type="text" id="teethOther" placeholder="例如：缺前門牙、假牙不合..."></div>
   </div>
   <p style="font-size:12px;color:#666;margin-bottom:6px;">（≥ 4 種「有些吃力」或「沒辦法吃」即可能有咀嚼障礙風險）</p>
   <table>
@@ -668,15 +668,15 @@ function clearFormKeepIdentity(){
   document.getElementById('noteText').value='';
   eat10Items.forEach(function(_,i){document.getElementById('e'+i).selectedIndex=0;});updateEat10();
   chewItems.forEach(function(_,i){document.getElementById('c'+i).selectedIndex=0;});updateChew();
-  document.getElementById('teethOtherField').style.display='none';
+  
+  // 變更點：清除隱藏 teethOtherField 的邏輯，讓其常駐顯示，只清空內容
+  document.getElementById('teethOther').value = '';
+  
   checkCheekPuff(); checkTongueFlex(); checkEat10Remark(); checkChewRemark();
   ['disease','eathabit','diet','overall'].forEach(function(key){msState[key].clear();buildMS('ms-'+key,key);updatePrintText(key);});
   document.getElementById('recordSelect').value = '';
 }
 
-// ==========================================
-// 修正一：新增缺失的 collectFormData 函式
-// ==========================================
 function collectFormData() {
   var eat10 = eat10Items.map(function(_, i) {
     return document.getElementById('e'+i).value;
@@ -722,9 +722,6 @@ function collectFormData() {
   };
 }
 
-// ==========================================
-// 修正二：新增缺失的 resetForm 函式
-// ==========================================
 function resetForm(shouldRefreshRecords) {
   document.getElementById('nameSelect').selectedIndex = 0;
   clearFormKeepIdentity();
@@ -1122,6 +1119,11 @@ function checkTongueFlex(){ document.getElementById('tongueFlexOther').style.dis
 function checkEat10Remark(){ document.getElementById('eat10RemarkOther').style.display = document.getElementById('eat10Remark').value === '自行輸入' ? '' : 'none'; }
 function checkChewRemark(){ document.getElementById('chewRemarkOther').style.display = document.getElementById('chewRemark').value === '自行輸入' ? '' : 'none'; }
 
+// 變更點：移除這行，因為這會去切換 display 狀態，導致說明框又被隱藏
+// function checkOtherTeeth(){document.getElementById('teethOtherField').style.display=document.getElementById('teethFunc').value==='其他'?'':'none';}
+// 我們現在讓它是一個空的 function，這樣舊的 onchange="checkOtherTeeth()" 就不會報錯
+function checkOtherTeeth(){ /* 保留為空，讓輸入框常駐顯示 */ }
+
 // ==========================================
 // EAT-10 吞嚥篩檢
 // ==========================================
@@ -1135,7 +1137,6 @@ function updateEat10(){var t=0;eat10Items.forEach(function(_,i){t+=parseInt(docu
 var chewItems=['硬豆干','炒花生','芭樂（整顆）','炸雞','水煮玉米（整枝）','蘋果／梨子／蓮霧／芭樂（切片）','烤魷魚／雞胗','水煮花枝／滷豬耳朵','柳丁（切片）','竹筍／敏豆／花椰菜／切片小黃瓜','煮熟的紅／白蘿蔔'];
 (function(){var tbody=document.getElementById('chewBody');chewItems.forEach(function(item,i){var tr=document.createElement('tr');tr.innerHTML='<td style="padding-left:10px;">'+item+'</td><td style="text-align:center;"><select id="c'+i+'" onchange="updateChew()" style="width:108px;"><option value="0">容易吃</option><option value="1">有些吃力</option><option value="1">沒辦法吃</option></select></td>';tbody.appendChild(tr);});})();
 function updateChew(){var t=0;chewItems.forEach(function(_,i){if(parseInt(document.getElementById('c'+i).value)>0)t++;});document.getElementById('chewTotal').textContent=t;var s=document.getElementById('chewStatus');if(t>=4){s.textContent='注意：可能有咀嚼障礙風險（'+t+' 種困難）';s.className='score-badge score-warn';}else{s.textContent='正常範圍（'+t+' 種困難）';s.className='score-badge score-ok';}}
-function checkOtherTeeth(){document.getElementById('teethOtherField').style.display=document.getElementById('teethFunc').value==='其他'?'':'none';}
 
 // ==========================================
 // 多選元件（Multiselect）
@@ -1274,7 +1275,7 @@ document.addEventListener('click',function(e){
 });
 
 // ==========================================
-// 表單資料載入 (修復相容性問題)
+// 表單資料載入
 // ==========================================
 function applyFormDataSync(d, isBatchPrint){
   var _isBatchPrint = typeof isBatchPrint !== 'undefined' ? isBatchPrint : false;
