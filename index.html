@@ -670,7 +670,6 @@ function deleteRecord() {
   }).catch(err => alert("刪除失敗：" + err.message));
 }
 
-// 自動清空並保留身分
 function onNameChange() {
   var n = document.getElementById('nameSelect').value;
   if (!n) return;
@@ -739,20 +738,16 @@ async function doBatchPrint() {
   
   closePrintModal();
   
-  // 1. 備份當前畫面資料
   let backupData = collectFormData();
   let backupOrg = document.getElementById('orgSelect').value;
   let backupRec = document.getElementById('recordSelect').value;
   
-  // 2. 建立隱藏的列印區塊
   let printArea = document.createElement('div');
   printArea.id = 'batchPrintArea';
   document.body.appendChild(printArea);
   
-  // 3. 隱藏原本的 UI
   document.getElementById('mainFormWrap').style.display = 'none';
   
-  // 4. 依序產生勾選的表單
   for (let i = 0; i < selectedKeys.length; i++) {
       let key = selectedKeys[i];
       let rec = allCurrentOrgRecords.find(r => r.recordKey === key);
@@ -765,7 +760,6 @@ async function doBatchPrint() {
           clone.id = ''; 
           clone.style.display = 'block';
           
-          // 修復 cloneNode 無法複製 select 與 checkbox 動態狀態的問題
           let oSel = document.getElementById('mainFormWrap').querySelectorAll('select');
           let cSel = clone.querySelectorAll('select');
           oSel.forEach((s, idx) => cSel[idx].value = s.value);
@@ -777,17 +771,14 @@ async function doBatchPrint() {
                else cInp[idx].value = inp.value;
           });
           
-          // 移除不需要印出的按鈕
           clone.querySelectorAll('.btn-row, .records-bar, .form-header button').forEach(b => b.remove());
           
           printArea.appendChild(clone);
       }
   }
   
-  // 5. 呼叫列印
   window.print();
   
-  // 6. 清理並還原畫面
   printArea.remove();
   document.getElementById('mainFormWrap').style.display = 'block';
   resetForm(false);
@@ -825,13 +816,11 @@ async function doTransfer() {
   
   if(!targetOrgId) return alert("請選擇目標機構");
   
-  // 1. 移動名單設定
   members[curOrgId] = members[curOrgId].filter(n => n !== name);
   if(!members[targetOrgId]) members[targetOrgId] = [];
   if(!members[targetOrgId].includes(name)) members[targetOrgId].push(name);
   saveCloudSettings();
   
-  // 2. 移動雲端紀錄
   let snapshot = await db.collection("records").where("orgId", "==", curOrgId).get();
   let batch = db.batch();
   
@@ -839,13 +828,13 @@ async function doTransfer() {
       let data = doc.data();
       if(data.data && data.data.name === name) {
           let oldRef = db.collection("records").doc(doc.id);
-          batch.delete(oldRef); // 刪除舊紀錄
+          batch.delete(oldRef); 
           
           data.orgId = targetOrgId;
           data.data.org = targetOrgId;
           let newDocId = targetOrgId + "___" + data.recordKey;
           let newRef = db.collection("records").doc(newDocId);
-          batch.set(newRef, data); // 建立新紀錄
+          batch.set(newRef, data); 
       }
   });
   
@@ -853,7 +842,6 @@ async function doTransfer() {
   alert(`✅ 已成功將「${name}」的所有資料轉出至新機構！`);
   document.getElementById('transferOverlay').classList.remove('show');
   
-  // 重新整理畫面
   onOrgChange(); 
   resetForm(false);
 }
@@ -939,10 +927,12 @@ function loadFromDash(key) {
   closeDashboard();
 }
 
+// 修正：快速建立不應使用重置表單功能，以免清空機構設定
 function startNewFromDash(name) {
-  resetForm(false); 
   document.getElementById('nameSelect').value = name;
+  clearFormKeepIdentity(); 
   closeDashboard();
+  window.scrollTo({ top: 0, behavior: 'smooth' }); 
 }
 
 // ==========================================
@@ -1143,7 +1133,7 @@ function updateAllPrintText(){
 document.addEventListener('click',function(e){if(!e.target.closest('.multiselect-wrap')){document.querySelectorAll('.ms-dd.open,.ms-trigger.open,.ms-arrow.open').forEach(function(el){el.classList.remove('open');});}});
 
 // ==========================================
-// 全同步表單載入邏輯 (修復批次列印時的節點抓取問題)
+// 全同步表單載入邏輯 
 // ==========================================
 function applyFormDataSync(d){
   if(d.org){document.getElementById('orgSelect').value=d.org; onOrgChange();}
