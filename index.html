@@ -109,7 +109,7 @@ tr:hover td{background:#fafaf8;}
 .json-btn:hover{background:#E6F1FB;}
 .reset-btn{background:#fff;color:#888;border:1px solid #ccc;border-radius:7px;padding:9px 18px;font-size:13px;cursor:pointer;margin-left:auto;}
 .reset-btn:hover{background:#f5f5f5;}
-.print-disease{display:none;}
+.print-text{display:none;}
 
 #loginOverlay { display:flex; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:9999; align-items:center; justify-content:center; flex-direction:column; }
 .login-box { background:#fff; padding:2.5rem 2rem; border-radius:12px; width:340px; text-align:center; box-shadow:0 10px 25px rgba(0,0,0,0.3); }
@@ -148,15 +148,13 @@ tr:hover td{background:#fafaf8;}
   .ms-trigger{display:none;}
   .ms-dd{display:none!important;}
   .ms-tags{display:none!important;}
-  .print-disease{display:block;font-size:12px;color:#000;padding:2px 0;line-height:1.4;}
+  .print-text{display:block;font-size:12px;color:#000;padding:2px 0;line-height:1.4;}
   .score-badge{font-size:11px;padding:1px 6px;}
   p {margin-bottom: 2px!important; font-size:11px!important;}
   .field-row[style*="background"] { background:transparent!important; border:none!important; padding:0!important;}
   #batchPrintArea { display:block!important; width:100%; }
   #batchPrintArea .form-wrap { display:block!important; page-break-after: always; margin-bottom:0; box-shadow:none; }
   #batchPrintArea .form-wrap:last-child { page-break-after: auto; }
-  
-  /* 隱藏列印時的 placeholder 提示文字 */
   ::-webkit-input-placeholder { color: transparent !important; }
   :-moz-placeholder { color: transparent !important; }
   ::-moz-placeholder { color: transparent !important; }
@@ -218,7 +216,7 @@ tr:hover td{background:#fafaf8;}
     <div class="field" style="grid-column:1/-1;">
       <label>疾病史（可複選）</label>
       <div id="ms-disease" class="multiselect-wrap"></div>
-      <div class="print-disease" id="print-disease"></div>
+      <div class="print-text" id="print-disease"></div>
     </div>
   </div>
   <div class="field-row" style="align-items:flex-end;">
@@ -316,10 +314,13 @@ tr:hover td{background:#fafaf8;}
 <div class="section">
   <div class="section-title">四、生活習慣調查</div>
   <div class="field-row">
-    <div class="field"><label>飲食質地</label>
-      <select id="dietHabit"><option value="">請選擇</option><option>軟質乾飯</option><option>細碎乾飯</option><option>細碎稀飯</option><option>半流質</option><option>細泥飲食</option><option>素食乾飯</option><option>素食稀飯</option></select>
+    <div class="field" style="flex:2;">
+      <label>飲食質地（可複選）</label>
+      <div id="ms-dietHabit" class="multiselect-wrap"></div>
+      <div class="print-text" id="print-dietHabit"></div>
     </div>
-    <div class="field"><label>平均用餐時間</label>
+    <div class="field" style="flex:1;">
+      <label>平均用餐時間</label>
       <select id="mealTime"><option value="">請選擇</option><option>15分鐘以內</option><option>15–30分鐘</option><option>30分鐘以上</option></select>
     </div>
   </div>
@@ -327,7 +328,7 @@ tr:hover td{background:#fafaf8;}
     <div class="field" style="grid-column:1/-1;">
       <label>飲食習慣（可複選）</label>
       <div id="ms-eathabit" class="multiselect-wrap"></div>
-      <div class="print-disease" id="print-eathabit"></div>
+      <div class="print-text" id="print-eathabit"></div>
     </div>
   </div>
 </div>
@@ -338,12 +339,12 @@ tr:hover td{background:#fafaf8;}
     <div style="background:#f5f5f2;display:flex;align-items:center;justify-content:flex-end;padding:7px 12px;font-size:13px;font-weight:bold;border-bottom:1px solid #e8e8e8;">飲食建議</div>
     <div style="padding:7px 10px;border-bottom:1px solid #e8e8e8;">
       <div id="ms-diet" class="multiselect-wrap"></div>
-      <div class="print-disease" id="print-diet"></div>
+      <div class="print-text" id="print-diet"></div>
     </div>
     <div style="background:#f5f5f2;display:flex;align-items:center;justify-content:flex-end;padding:7px 12px;font-size:13px;font-weight:bold;border-bottom:1px solid #e8e8e8;">綜合評估</div>
     <div style="padding:7px 10px;border-bottom:1px solid #e8e8e8;">
       <div id="ms-overall" class="multiselect-wrap"></div>
-      <div class="print-disease" id="print-overall"></div>
+      <div class="print-text" id="print-overall"></div>
     </div>
     <div style="background:#f5f5f2;display:flex;align-items:flex-start;justify-content:flex-end;padding:7px 12px 0;font-size:13px;font-weight:bold;border-bottom:1px solid #e8e8e8;padding-top:9px;">說明</div>
     <div style="padding:7px 10px;border-bottom:1px solid #e8e8e8;">
@@ -353,6 +354,26 @@ tr:hover td{background:#fafaf8;}
     <div style="padding:7px 10px;display:grid;grid-template-columns:1fr 1fr;gap:10px;">
       <input type="text" id="signature" placeholder="評估人員簽名">
       <input type="date" id="assessDate">
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">六、追蹤紀錄</div>
+  <div style="display:grid;grid-template-columns:90px 1fr;gap:0;border:1px solid #e0e0d8;border-radius:6px;overflow:visible;">
+    <div style="background:#f5f5f2;display:flex;align-items:center;justify-content:flex-end;padding:7px 12px;font-size:13px;font-weight:bold;border-bottom:1px solid #e8e8e8;">追蹤結果</div>
+    <div style="padding:7px 10px;border-bottom:1px solid #e8e8e8; display:flex; gap:10px; align-items:center;">
+      <select id="followUpStatus" style="width:auto; min-width:150px;">
+        <option value="">── 請選擇 ──</option>
+        <option>維持計畫</option>
+        <option>更改質地餐食</option>
+      </select>
+      <input type="text" id="followUpNote" placeholder="請輸入追蹤備註說明..." style="flex:1;">
+    </div>
+    <div style="background:#f5f5f2;display:flex;align-items:center;justify-content:flex-end;padding:7px 12px;font-size:13px;font-weight:bold;">簽名／日期</div>
+    <div style="padding:7px 10px;display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <input type="text" id="followUpSignature" placeholder="追蹤人員簽名">
+      <input type="date" id="followUpDate">
     </div>
   </div>
 </div>
@@ -539,7 +560,8 @@ function loadCloudSettings() {
       orgs = data.orgs || [];
       members = data.members || {};
       if(data.msOptions) {
-         ['disease','eathabit','diet','overall'].forEach(function(k){
+         // 變更點：加入 'dietHabit' 讓飲食質地選項從雲端載入
+         ['disease','eathabit','diet','overall','dietHabit'].forEach(function(k){
             if(data.msOptions[k]) {
                msOptions[k] = Array.isArray(data.msOptions[k]) ? data.msOptions[k] : Object.values(data.msOptions[k]);
             }
@@ -662,18 +684,16 @@ function onNameChange() {
 }
 
 function clearFormKeepIdentity(){
-  ['age','height','weight','signature','cheekPuffOther','tongueFlexOther','eat10RemarkOther','chewRemarkOther'].forEach(function(id){document.getElementById(id).value='';});
-  ['gender','vision','hearing','cognition','cheekPuff','tongueFlex','eat10Remark','chewRemark','teethFunc','dietHabit','mealTime'].forEach(function(id){document.getElementById(id).selectedIndex=0;});
+  ['age','height','weight','signature','cheekPuffOther','tongueFlexOther','eat10RemarkOther','chewRemarkOther','followUpNote','followUpSignature','followUpDate'].forEach(function(id){if(document.getElementById(id))document.getElementById(id).value='';});
+  ['gender','vision','hearing','cognition','cheekPuff','tongueFlex','eat10Remark','chewRemark','teethFunc','mealTime','followUpStatus'].forEach(function(id){if(document.getElementById(id))document.getElementById(id).selectedIndex=0;});
   document.getElementById('bmiDisplay').textContent='—';document.getElementById('bmiDisplay').className='bmi-badge';
   document.getElementById('noteText').value='';
   eat10Items.forEach(function(_,i){document.getElementById('e'+i).selectedIndex=0;});updateEat10();
   chewItems.forEach(function(_,i){document.getElementById('c'+i).selectedIndex=0;});updateChew();
-  
-  // 變更點：清除隱藏 teethOtherField 的邏輯，讓其常駐顯示，只清空內容
-  document.getElementById('teethOther').value = '';
-  
+  document.getElementById('teethOtherField').style.display='none';
   checkCheekPuff(); checkTongueFlex(); checkEat10Remark(); checkChewRemark();
-  ['disease','eathabit','diet','overall'].forEach(function(key){msState[key].clear();buildMS('ms-'+key,key);updatePrintText(key);});
+  // 變更點：加入 'dietHabit' 進行清除
+  ['disease','eathabit','dietHabit','diet','overall'].forEach(function(key){msState[key].clear();buildMS('ms-'+key,key);updatePrintText(key);});
   document.getElementById('recordSelect').value = '';
 }
 
@@ -686,7 +706,8 @@ function collectFormData() {
   });
   var msSelected = {};
   var msOpts = {};
-  ['disease','eathabit','diet','overall'].forEach(function(k) {
+  // 變更點：加入 'dietHabit' 進行資料收集
+  ['disease','eathabit','dietHabit','diet','overall'].forEach(function(k) {
     msSelected[k] = Array.from(msState[k]);
     msOpts[k] = msOptions[k].slice();
   });
@@ -712,11 +733,14 @@ function collectFormData() {
     chew:             chew,
     chewRemark:       document.getElementById('chewRemark').value,
     chewRemarkOther:  document.getElementById('chewRemarkOther').value,
-    dietHabit:        document.getElementById('dietHabit').value,
     mealTime:         document.getElementById('mealTime').value,
     noteText:         document.getElementById('noteText').value,
     signature:        document.getElementById('signature').value,
     assessDate:       document.getElementById('assessDate').value,
+    followUpStatus:   document.getElementById('followUpStatus') ? document.getElementById('followUpStatus').value : '',
+    followUpNote:     document.getElementById('followUpNote') ? document.getElementById('followUpNote').value : '',
+    followUpSignature:document.getElementById('followUpSignature') ? document.getElementById('followUpSignature').value : '',
+    followUpDate:     document.getElementById('followUpDate') ? document.getElementById('followUpDate').value : '',
     msSelected:       msSelected,
     msOpts:           msOpts
   };
@@ -1119,10 +1143,8 @@ function checkTongueFlex(){ document.getElementById('tongueFlexOther').style.dis
 function checkEat10Remark(){ document.getElementById('eat10RemarkOther').style.display = document.getElementById('eat10Remark').value === '自行輸入' ? '' : 'none'; }
 function checkChewRemark(){ document.getElementById('chewRemarkOther').style.display = document.getElementById('chewRemark').value === '自行輸入' ? '' : 'none'; }
 
-// 變更點：移除這行，因為這會去切換 display 狀態，導致說明框又被隱藏
-// function checkOtherTeeth(){document.getElementById('teethOtherField').style.display=document.getElementById('teethFunc').value==='其他'?'':'none';}
-// 我們現在讓它是一個空的 function，這樣舊的 onchange="checkOtherTeeth()" 就不會報錯
-function checkOtherTeeth(){ /* 保留為空，讓輸入框常駐顯示 */ }
+// 保留為空，讓輸入框常駐顯示
+function checkOtherTeeth(){ }
 
 // ==========================================
 // EAT-10 吞嚥篩檢
@@ -1144,13 +1166,19 @@ function updateChew(){var t=0;chewItems.forEach(function(_,i){if(parseInt(docume
 var msOptions={
   disease:['糖尿病','高血壓','高血脂','心臟病','中風','慢性腎臟病（CKD）','失智症','骨質疏鬆','帕金森氏症','慢性阻塞性肺病（COPD）','癌症','貧血','肝硬化','憂鬱症'],
   eathabit:['湯多','菜多','飯多','淋肉湯','海鮮過敏','素食','無'],
+  // 變更點：加入 dietHabit 的預設選項
+  dietHabit:['軟質乾飯','細碎乾飯','細碎稀飯','半流質','細泥飲食','素食乾飯','素食稀飯'],
   diet:['牙齒完整或部分功能，舌頭功能正常，建議軟質飲食（避免太硬、菜梗切小段）。','牙齒缺牙或無牙但舌頭正常或尚可，建議細碎飲食（大小約1.5cm丁狀）。','牙齒缺牙或無牙但舌頭正常或尚可，建議細碎（稀飯）飲食（大小約1.5cm丁狀）。','無牙、咀嚼困難但舌頭功能尚可，建議半流質飲食（鹹粥狀）。','對細碎食物有嗆咳或異物感／含水量高食物有嗆咳，建議細泥飲食。'],
   overall:['依飲食質地建議給予，持續定期追蹤。','鼓勵持續參與中心活動以維持肌力與活動量。','建議每日飲水目標設定為1500–2000cc，並鼓勵參與活動後補充水分。','體重過重：BMI指數偏高，建議增加日間活動量，宜控制澱粉與精製糖攝取量。','體重過輕／肌少症風險，建議採高蛋白高熱量飲食原則，正餐之間增加豆漿或營養品作為點心。','食慾不佳：建議採少量多餐方式，並鼓勵長輩自主進食以增加成就感。','中風／喝水易嗆：建議使用食物增稠劑將液體調整至適合稠度，並採收下巴姿勢進食。','進食速度過快：已衛教使用小湯匙進食，並提醒每口充分咀嚼吞嚥後再進食下一口。','建議改用斜口杯或單向吸管控制流速，避免過多水量。','每日持續執行餐前健口操，加強舌部靈活度與咽喉肌群力量，降低誤嚥風險。']
 };
-var msState={disease:new Set(),eathabit:new Set(),diet:new Set(),overall:new Set()};
-var msPh={disease:'請選擇疾病史…',eathabit:'請選擇飲食習慣…',diet:'請選擇飲食建議項目…',overall:'請選擇綜合評估項目…'};
-var msAddable={disease:true,eathabit:true,overall:true};
-var msPrintId={disease:'print-disease',eathabit:'print-eathabit',diet:'print-diet',overall:'print-overall'};
+// 變更點：加入 dietHabit 狀態
+var msState={disease:new Set(),eathabit:new Set(),dietHabit:new Set(),diet:new Set(),overall:new Set()};
+// 變更點：加入 dietHabit 提示
+var msPh={disease:'請選擇疾病史…',eathabit:'請選擇飲食習慣…',dietHabit:'請選擇飲食質地…',diet:'請選擇飲食建議項目…',overall:'請選擇綜合評估項目…'};
+// 變更點：加入 dietHabit 可新增設定
+var msAddable={disease:true,eathabit:true,dietHabit:true,overall:true,diet:true};
+// 變更點：加入 dietHabit 列印對應 ID
+var msPrintId={disease:'print-disease',eathabit:'print-eathabit',dietHabit:'print-dietHabit',diet:'print-diet',overall:'print-overall'};
 
 function buildMS(cid,key){
   var wrap=document.getElementById(cid);if(!wrap)return;
@@ -1266,7 +1294,8 @@ function updatePrintText(key){
   el.textContent=selected.length>0?selected.join('、'):'（未填寫）';
 }
 function updateAllPrintText(){
-  ['disease','eathabit','diet','overall'].forEach(function(k){updatePrintText(k);});
+  // 變更點：加入 dietHabit
+  ['disease','eathabit','dietHabit','diet','overall'].forEach(function(k){updatePrintText(k);});
 }
 document.addEventListener('click',function(e){
   if(!e.target.closest('.multiselect-wrap')){
@@ -1319,12 +1348,19 @@ function applyFormDataSync(d, isBatchPrint){
   checkChewRemark();
   if(d.chew) d.chew.forEach(function(v,i){var el=document.getElementById('c'+i);if(el)el.value=v;});
   updateChew();
-  if(d.dietHabit) document.getElementById('dietHabit').value=d.dietHabit;
+  
+  // 變更點：原單選 dietHabit 移除，改由下方 msSelected 處理
   if(d.mealTime) document.getElementById('mealTime').value=d.mealTime;
   if(d.noteText) document.getElementById('noteText').value=d.noteText;
   if(d.signature) document.getElementById('signature').value=d.signature;
   if(d.assessDate) document.getElementById('assessDate').value=d.assessDate;
-  ['disease','eathabit','diet','overall'].forEach(function(k){
+  if(d.followUpStatus) document.getElementById('followUpStatus').value=d.followUpStatus;
+  if(d.followUpNote) document.getElementById('followUpNote').value=d.followUpNote;
+  if(d.followUpSignature) document.getElementById('followUpSignature').value=d.followUpSignature;
+  if(d.followUpDate) document.getElementById('followUpDate').value=d.followUpDate;
+  
+  // 變更點：加入 dietHabit
+  ['disease','eathabit','dietHabit','diet','overall'].forEach(function(k){
     if(d.msOpts&&d.msOpts[k]) msOptions[k]=d.msOpts[k];
     msState[k].clear();buildMS('ms-'+k,k);
     if(d.msSelected&&d.msSelected[k]){
@@ -1341,8 +1377,10 @@ function applyFormDataSync(d, isBatchPrint){
 // ==========================================
 // 初始化
 // ==========================================
-['disease','eathabit','diet','overall'].forEach(function(k){buildMS('ms-'+k,k);});
+// 變更點：加入 dietHabit
+['disease','eathabit','dietHabit','diet','overall'].forEach(function(k){buildMS('ms-'+k,k);});
 document.getElementById('assessDate').value=new Date().toISOString().split('T')[0];
 </script>
 </body>
 </html>
+這串程式碼 飲食質地的標籤顯示有問題 應該會顯示請輸入飲食質地 還有 剛剛飲食建議 可以自行移動跟刪除以及儲存雲端 現在變不行了
