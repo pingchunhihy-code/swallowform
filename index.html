@@ -21,8 +21,15 @@ body{font-family:"Microsoft JhengHei","PingFang TC",sans-serif;color:#222;font-s
 .mgr-btn:hover{background:#f0f0ec;border-color:#378ADD;color:#185FA5;}
 .logout-btn{position:absolute;left:0;top:0;background:#FCEBEB;border:1px solid #F09595;border-radius:6px;padding:5px 12px;font-size:12px;cursor:pointer;color:#A32D2D;}
 .logout-btn:hover{background:#F7C1C1;}
-.section{background:#fff;border:1px solid #e0e0d8;border-radius:8px;padding:.75rem 1rem;margin-bottom:.6rem;}
-.section-title{font-size:14px;font-weight:bold;margin-bottom:10px;padding:7px 12px;background:#f0f0ec;border-left:4px solid #378ADD;border-radius:4px;color:#1a1a1a;}
+.section{background:#fff;border:1px solid #e0e0d8;border-radius:8px;padding:.75rem 1rem;margin-bottom:.6rem; transition: all 0.3s ease;}
+.section-title{font-size:14px;font-weight:bold;margin-bottom:10px;padding:7px 12px;background:#f0f0ec;border-left:4px solid #378ADD;border-radius:4px;color:#1a1a1a; display:flex; justify-content:space-between; align-items:center;}
+
+/* 新增：區塊收合開關樣式 */
+.toggle-btn { font-size:12px; font-weight:normal; color:#185FA5; background:none; border:1px solid #185FA5; border-radius:4px; padding:2px 8px; cursor:pointer; }
+.toggle-btn:hover { background:#E6F1FB; }
+.section-content { overflow:hidden; transition:max-height 0.3s ease; }
+.section-content.collapsed { max-height:0; display:none; }
+
 .field-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-bottom:8px;}
 .field{display:flex;flex-direction:column;gap:3px;}
 .field label{font-size:11px;color:#666;}
@@ -111,29 +118,6 @@ tr:hover td{background:#fafaf8;}
 .reset-btn:hover{background:#f5f5f5;}
 .print-text{display:none;}
 
-/* ── 評估表格多選樣式 ── */
-.assess-multiselect-wrap{position:relative;width:100%;}
-.assess-ms-trigger{display:flex;align-items:center;justify-content:space-between;background:#f8f8f6;border:1px solid #d0d0c8;border-radius:5px;padding:4px 7px;cursor:pointer;min-height:28px;user-select:none;font-size:12px;}
-.assess-ms-trigger:hover,.assess-ms-trigger.open{border-color:#378ADD;background:#fff;}
-.assess-ms-trigger.open{outline:2px solid #378ADD;outline-offset:1px;}
-.assess-ms-text{color:#888;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.assess-ms-text.has-sel{color:#185FA5;font-weight:bold;}
-.assess-ms-dd{display:none;position:absolute;top:calc(100% + 2px);left:0;right:0;background:#fff;border:1px solid #d0d0c8;border-radius:7px;box-shadow:0 4px 16px rgba(0,0,0,.15);z-index:1500;min-width:200px;}
-.assess-ms-dd.open{display:block;}
-.assess-ms-ctrl-row{display:flex;gap:4px;padding:6px 8px;border-bottom:1px solid #e8e8e8;background:#f5f5f2;border-radius:7px 7px 0 0;}
-.assess-ms-ctrl-btn{font-size:11px;padding:2px 8px;border:1px solid #d0d0c8;border-radius:4px;background:#fff;cursor:pointer;color:#555;}
-.assess-ms-ctrl-btn:hover{background:#E6F1FB;border-color:#378ADD;color:#185FA5;}
-.assess-ms-item{display:flex;align-items:center;gap:6px;padding:6px 10px;cursor:pointer;border-bottom:.5px solid #f0f0ec;font-size:12px;}
-.assess-ms-item:last-child{border-bottom:none;}
-.assess-ms-item:hover{background:#f5f5f2;}
-.assess-ms-item.sel{background:#E6F1FB;}
-.assess-ms-item input[type=checkbox]{width:13px;height:13px;flex-shrink:0;}
-.assess-ms-item label{cursor:pointer;flex:1;line-height:1.4;}
-.assess-tags{display:flex;flex-wrap:wrap;gap:3px;margin-top:4px;}
-.assess-tag{display:inline-flex;align-items:center;gap:3px;background:#E6F1FB;color:#185FA5;font-size:11px;padding:2px 7px;border-radius:9px;}
-.assess-tag-x{cursor:pointer;font-size:13px;color:#378ADD;}
-.assess-tag-x:hover{color:#A32D2D;}
-
 #loginOverlay { display:flex; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:9999; align-items:center; justify-content:center; flex-direction:column; }
 .login-box { background:#fff; padding:2.5rem 2rem; border-radius:12px; width:340px; text-align:center; box-shadow:0 10px 25px rgba(0,0,0,0.3); }
 .login-box h2 { margin-bottom:1.5rem; color:#185FA5; font-size:20px; }
@@ -153,45 +137,38 @@ tr:hover td{background:#fafaf8;}
 
 /* ★★★ 列印版面極致壓縮 ★★★ */
 @media print{
-  @page{size:A4;margin:10mm 12mm;} 
-  body{background:#fff;padding:0;font-size:12px;line-height:1.4;} 
+  @page{size:A4;margin:8mm 10mm;} 
+  body{background:#fff;padding:0;font-size:12px;line-height:1.35;} 
   .form-wrap{box-shadow:none;padding:0;border-radius:0;max-width:100%;}
+  .form-header{padding-bottom:2px;margin-bottom:4px;}
+  .form-header .sub-title{font-size:14px;margin-top:2px;font-weight:bold;color:#333;}
+  .org-select{font-size:16px;border-bottom:1px solid #666;padding:0;color:#000;}
+  .mgr-btn,.logout-btn,.btn-row,.overlay,.records-bar,.toggle-btn{display:none!important;}
   
-  /* 調整標題與間距 */
-  .form-header{padding-bottom:8px;margin-bottom:12px;} 
-  .form-header .sub-title{font-size:14px;margin-top:4px;font-weight:bold;} 
-  .org-select{font-size:16px;border-bottom:1px solid #666;padding:0 0 4px 0;} 
+  .section{padding:.3rem .5rem;margin-bottom:.3rem;border:1px solid #aaa;border-radius:3px;page-break-inside:avoid;} 
   
-  .mgr-btn,.logout-btn,.btn-row,.overlay,.records-bar{display:none!important;}
-  .section{padding:.4rem .6rem;margin-bottom:.5rem;border:1px solid #aaa;border-radius:3px;page-break-inside:avoid;} 
-  .section-title{font-size:13px;margin-bottom:6px;padding:3px 6px;background:#eee;border-left:3px solid #666;}
-  .field-row{gap:6px;margin-bottom:6px;} 
-  .field label{font-size:10.5px;margin-bottom:2px;}
-  input,select,textarea{font-size:12px;padding:3px 4px;background:#fff;border:1px solid #aaa;}
-  
+  /* 如果區塊在畫面中被隱藏，列印時也強制隱藏不佔空間 */
+  .section.print-hide { display:none !important; }
+  .section-content.collapsed { display:none !important; }
+
+  .section-title{font-size:13px;margin-bottom:4px;padding:3px 6px;background:#eee;border-left:3px solid #666;}
+  .field-row{gap:4px;margin-bottom:4px;} 
+  .field label{font-size:10px;margin-bottom:1px;}
+  input,select,textarea{font-size:12px;padding:2px 4px;background:#fff;border:1px solid #aaa;}
   .bmi-badge{font-size:12px;padding:2px 4px;min-height:22px;}
-  table{font-size:12px;margin-bottom:4px;}
-  th{font-size:12px;padding:4px;}
-  td{font-size:12px;padding:4px;}
-  
+  table{font-size:12px;margin-bottom:2px;}
+  th{font-size:12px;padding:3px 4px;}
+  td{font-size:12px;padding:3px 4px;}
   .ms-trigger{display:none;}
   .ms-dd{display:none!important;}
   .ms-tags{display:none!important;}
-  .assess-ms-trigger{display:none!important;}
-  .assess-ms-dd{display:none!important;}
-  .assess-tags{display:none!important;}
-  
-  .assess-print-text{display:block!important;font-size:12px;color:#000;}
   .print-text{display:block;font-size:12px;color:#000;padding:2px 0;line-height:1.4;}
-  .score-badge{font-size:11px;padding:2px 6px;}
-  
-  p {margin-bottom: 4px!important; font-size:11px!important;}
+  .score-badge{font-size:11px;padding:1px 6px;}
+  p {margin-bottom: 2px!important; font-size:11px!important;}
   .field-row[style*="background"] { background:transparent!important; border:none!important; padding:0!important;}
-  
   #batchPrintArea { display:block!important; width:100%; }
   #batchPrintArea .form-wrap { display:block!important; page-break-after: always; margin-bottom:0; box-shadow:none; }
   #batchPrintArea .form-wrap:last-child { page-break-after: auto; }
-  
   ::-webkit-input-placeholder { color: transparent !important; }
   :-moz-placeholder { color: transparent !important; }
   ::-moz-placeholder { color: transparent !important; }
@@ -270,7 +247,6 @@ tr:hover td{background:#fafaf8;}
 
 <div class="section">
   <div class="section-title">二、口腔功能與吞嚥能力篩檢</div>
-  
   <div class="field-row" style="margin-bottom:12px; background:#fafaf8; padding:8px; border:1px solid #e0e0d8; border-radius:5px;">
     <div class="field">
       <label>鼓頰評估 (臉部肌力與協調)</label>
@@ -297,26 +273,13 @@ tr:hover td{background:#fafaf8;}
       <input type="text" id="tongueFlexOther" style="display:none; margin-top:4px;" placeholder="請自行輸入說明...">
     </div>
   </div>
-
   <p style="font-size:12px;color:#666;margin-bottom:6px;">【EAT-10 吞嚥篩檢】0＝沒有　1＝很少　2＝偶爾　3＝經常　4＝總是　（總分 ≥ 3 分即可能有吞嚥障礙風險）</p>
-
-  <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:8px;padding:7px 10px;background:#f0f4fb;border:1px solid #c8d8f0;border-radius:6px;">
-    <span style="font-size:11px;color:#555;font-weight:bold;white-space:nowrap;">快速設定所有題目：</span>
-    <button class="assess-ms-ctrl-btn" onclick="setAllEat10(0)">全部 0 (沒有)</button>
-    <button class="assess-ms-ctrl-btn" onclick="setAllEat10(1)">全部 1 (很少)</button>
-    <button class="assess-ms-ctrl-btn" onclick="setAllEat10(2)">全部 2 (偶爾)</button>
-    <button class="assess-ms-ctrl-btn" onclick="setAllEat10(3)">全部 3 (經常)</button>
-    <button class="assess-ms-ctrl-btn" onclick="setAllEat10(4)">全部 4 (總是)</button>
-    <span style="font-size:11px;color:#999;margin-left:4px;">（可再個別調整各題）</span>
-  </div>
-
   <table>
     <thead><tr><th style="width:72%;text-align:left;padding-left:10px;">項目</th><th>得分</th></tr></thead>
     <tbody id="eat10Body"></tbody>
     <tfoot><tr class="score-row"><td style="text-align:right;padding-right:14px;">總分</td><td style="text-align:center;font-size:14px;"><span id="eat10Total">0</span></td></tr></tfoot>
   </table>
   <div style="margin-top:5px; margin-bottom:8px;"><span id="eat10Status" class="score-badge score-ok">正常範圍</span></div>
-  
   <div class="field-row" style="margin-top:10px; background:#fafaf8; padding:8px; border:1px solid #e0e0d8; border-radius:5px;">
     <div class="field">
       <label>EAT-10 評估備註</label>
@@ -333,62 +296,18 @@ tr:hover td{background:#fafaf8;}
 <div class="section">
   <div class="section-title">三、咀嚼能力篩檢表</div>
   <div class="field-row" style="margin-bottom:7px;">
-    <div class="field">
-      <label>牙齒功能</label>
-      <select id="teethFunc">
-        <option value="">請選擇</option>
-        <option>完整</option>
-        <option>缺牙</option>
-        <option>無牙</option>
-        <option>假牙</option>
-        <option>部份缺牙</option>
-        <option>其他</option>
-      </select>
+    <div class="field"><label>牙齒功能</label>
+      <select id="teethFunc"><option value="">請選擇</option><option>完整</option><option>缺牙</option><option>無牙</option><option>假牙</option><option>部份缺牙</option><option>其他</option></select>
     </div>
-    <div class="field" style="flex:2;">
-      <label>牙齒狀況備註</label>
-      <input type="text" id="teethOther" placeholder="例如：上排假牙不合、缺左下第一大臼齒…">
-    </div>
+    <div class="field" id="teethOtherField"><label>牙齒狀況說明 (可選)</label><input type="text" id="teethOther" placeholder="例如：缺前門牙、假牙不合..."></div>
   </div>
-
   <p style="font-size:12px;color:#666;margin-bottom:6px;">（≥ 4 種「有些吃力」或「沒辦法吃」即可能有咀嚼障礙風險）</p>
-
-  <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:8px;padding:7px 10px;background:#f0f4fb;border:1px solid #c8d8f0;border-radius:6px;">
-    <span style="font-size:11px;color:#555;font-weight:bold;white-space:nowrap;">快速設定所有食物：</span>
-    <button class="assess-ms-ctrl-btn" onclick="setAllChew(0)">全部「容易吃」</button>
-    <button class="assess-ms-ctrl-btn" onclick="setAllChew(1,'有些吃力')">全部「有些吃力」</button>
-    <button class="assess-ms-ctrl-btn" onclick="setAllChew(2,'沒辦法吃')">全部「沒辦法吃」</button>
-    <span style="font-size:11px;color:#999;margin-left:4px;">（可再個別調整各項）</span>
-  </div>
-
-  <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:10px;padding:7px 10px;background:#fff8f0;border:1px solid #f0d8b0;border-radius:6px;">
-    <span style="font-size:11px;color:#7a4f00;font-weight:bold;white-space:nowrap;">📋 快選無法食用項目：</span>
-    <div style="flex:1;min-width:200px;">
-      <div id="chew-cannot-wrap" class="assess-multiselect-wrap">
-        <div class="assess-ms-trigger" id="chew-cannot-trigger" onclick="toggleAssessMS('chew-cannot')">
-          <span class="assess-ms-text" id="chew-cannot-text">點此勾選「沒辦法吃」的食物…</span>
-          <span style="font-size:9px;color:#999;margin-left:6px;" id="chew-cannot-arrow">▼</span>
-        </div>
-        <div class="assess-ms-dd" id="chew-cannot-dd">
-          <div class="assess-ms-ctrl-row">
-            <button class="assess-ms-ctrl-btn" onclick="chewCannotSelectAll(true,event)">全選</button>
-            <button class="assess-ms-ctrl-btn" onclick="chewCannotSelectAll(false,event)">全不選</button>
-          </div>
-          <div id="chew-cannot-items"></div>
-        </div>
-      </div>
-      <div class="assess-tags" id="chew-cannot-tags"></div>
-    </div>
-    <button class="assess-ms-ctrl-btn" style="background:#FFF0E0;border-color:#E8A840;color:#7a4f00;" onclick="applyChewCannot()">套用至表格</button>
-  </div>
-
   <table>
     <thead><tr><th style="width:72%;text-align:left;padding-left:10px;">食物</th><th>評估</th></tr></thead>
     <tbody id="chewBody"></tbody>
     <tfoot><tr class="score-row"><td style="text-align:right;padding-right:14px;">困難次數</td><td style="text-align:center;font-size:14px;"><span id="chewTotal">0</span></td></tr></tfoot>
   </table>
   <div style="margin-top:5px; margin-bottom:8px;"><span id="chewStatus" class="score-badge score-ok">正常範圍</span></div>
-
   <div class="field-row" style="margin-top:10px; background:#fafaf8; padding:8px; border:1px solid #e0e0d8; border-radius:5px;">
     <div class="field">
       <label>咀嚼能力評估備註</label>
@@ -449,22 +368,27 @@ tr:hover td{background:#fafaf8;}
   </div>
 </div>
 
-<div class="section">
-  <div class="section-title">六、追蹤紀錄</div>
-  <div style="display:grid;grid-template-columns:90px 1fr;gap:0;border:1px solid #e0e0d8;border-radius:6px;overflow:visible;">
-    <div style="background:#f5f5f2;display:flex;align-items:center;justify-content:flex-end;padding:7px 12px;font-size:13px;font-weight:bold;border-bottom:1px solid #e8e8e8;">追蹤結果</div>
-    <div style="padding:7px 10px;border-bottom:1px solid #e8e8e8; display:flex; gap:10px; align-items:center;">
-      <select id="followUpStatus" style="width:auto; min-width:150px;">
-        <option value="">── 請選擇 ──</option>
-        <option>維持計畫</option>
-        <option>更改質地餐食</option>
-      </select>
-      <input type="text" id="followUpNote" placeholder="請輸入追蹤備註說明..." style="flex:1;">
-    </div>
-    <div style="background:#f5f5f2;display:flex;align-items:center;justify-content:flex-end;padding:7px 12px;font-size:13px;font-weight:bold;">簽名／日期</div>
-    <div style="padding:7px 10px;display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-      <input type="text" id="followUpSignature" placeholder="追蹤人員簽名">
-      <input type="date" id="followUpDate">
+<div class="section print-hide" id="followUpSection">
+  <div class="section-title">
+    <span>六、追蹤紀錄</span>
+    <button class="toggle-btn" id="followUpToggleBtn" onclick="toggleFollowUp()">👁️ 顯示此區塊</button>
+  </div>
+  <div class="section-content collapsed" id="followUpContent">
+    <div style="display:grid;grid-template-columns:90px 1fr;gap:0;border:1px solid #e0e0d8;border-radius:6px;overflow:visible;">
+      <div style="background:#f5f5f2;display:flex;align-items:center;justify-content:flex-end;padding:7px 12px;font-size:13px;font-weight:bold;border-bottom:1px solid #e8e8e8;">追蹤結果</div>
+      <div style="padding:7px 10px;border-bottom:1px solid #e8e8e8; display:flex; gap:10px; align-items:center;">
+        <select id="followUpStatus" style="width:auto; min-width:150px;">
+          <option value="">── 請選擇 ──</option>
+          <option>維持計畫</option>
+          <option>更改質地餐食</option>
+        </select>
+        <input type="text" id="followUpNote" placeholder="請輸入追蹤備註說明..." style="flex:1;">
+      </div>
+      <div style="background:#f5f5f2;display:flex;align-items:center;justify-content:flex-end;padding:7px 12px;font-size:13px;font-weight:bold;">簽名／日期</div>
+      <div style="padding:7px 10px;display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <input type="text" id="followUpSignature" placeholder="追蹤人員簽名">
+        <input type="date" id="followUpDate">
+      </div>
     </div>
   </div>
 </div>
@@ -799,11 +723,13 @@ function clearFormKeepIdentity(){
   eat10Items.forEach(function(_,i){document.getElementById('e'+i).selectedIndex=0;});updateEat10();
   chewItems.forEach(function(_,i){document.getElementById('c'+i).selectedIndex=0;});updateChew();
   checkCheekPuff(); checkTongueFlex(); checkEat10Remark(); checkChewRemark();
+  
   ['disease','eathabit','dietHabit','diet','overall'].forEach(function(key){msState[key].clear();buildMS('ms-'+key,key);updatePrintText(key);});
-  chewCannotState.clear();
-  renderChewCannotTags();
-  updateChewCannotTrigger();
+  
   document.getElementById('recordSelect').value = '';
+  
+  // 變更點：清空資料時自動收合追蹤區塊
+  forceCollapseFollowUp();
 }
 
 function collectFormData() {
@@ -819,6 +745,10 @@ function collectFormData() {
     msSelected[k] = Array.from(msState[k]);
     msOpts[k] = msOptions[k].slice();
   });
+  
+  // 檢查追蹤區塊是否為開啟狀態
+  var isFollowUpOpen = !document.getElementById('followUpContent').classList.contains('collapsed');
+
   return {
     org:              document.getElementById('orgSelect').value,
     name:             document.getElementById('nameSelect').value,
@@ -845,12 +775,14 @@ function collectFormData() {
     noteText:         document.getElementById('noteText').value,
     signature:        document.getElementById('signature').value,
     assessDate:       document.getElementById('assessDate').value,
-    followUpStatus:   document.getElementById('followUpStatus') ? document.getElementById('followUpStatus').value : '',
-    followUpNote:     document.getElementById('followUpNote') ? document.getElementById('followUpNote').value : '',
-    followUpSignature:document.getElementById('followUpSignature') ? document.getElementById('followUpSignature').value : '',
-    followUpDate:     document.getElementById('followUpDate') ? document.getElementById('followUpDate').value : '',
     msSelected:       msSelected,
-    msOpts:           msOpts
+    msOpts:           msOpts,
+    
+    // 只在區塊打開時，才把這四個欄位的值存入雲端
+    followUpStatus:   isFollowUpOpen ? document.getElementById('followUpStatus').value : '',
+    followUpNote:     isFollowUpOpen ? document.getElementById('followUpNote').value : '',
+    followUpSignature:isFollowUpOpen ? document.getElementById('followUpSignature').value : '',
+    followUpDate:     isFollowUpOpen ? document.getElementById('followUpDate').value : ''
   };
 }
 
@@ -873,6 +805,43 @@ function exportJSON() {
   a.download = (data.name || '個案') + '_' + (data.assessDate || '日期未填') + '.json';
   a.click();
 }
+
+// ==========================================
+// 動態隱藏/顯示 追蹤區塊
+// ==========================================
+function toggleFollowUp() {
+  var content = document.getElementById('followUpContent');
+  var btn = document.getElementById('followUpToggleBtn');
+  var section = document.getElementById('followUpSection');
+  
+  if (content.classList.contains('collapsed')) {
+    content.classList.remove('collapsed');
+    section.classList.remove('print-hide');
+    btn.textContent = '👁️ 隱藏此區塊';
+    btn.style.background = '#E6F1FB';
+    
+    // 展開時自動填入今天日期
+    if(!document.getElementById('followUpDate').value) {
+       document.getElementById('followUpDate').value = new Date().toISOString().split('T')[0];
+    }
+  } else {
+    content.classList.add('collapsed');
+    section.classList.add('print-hide');
+    btn.textContent = '👁️ 顯示此區塊';
+    btn.style.background = 'none';
+  }
+}
+
+function forceCollapseFollowUp() {
+  var content = document.getElementById('followUpContent');
+  var btn = document.getElementById('followUpToggleBtn');
+  var section = document.getElementById('followUpSection');
+  content.classList.add('collapsed');
+  section.classList.add('print-hide');
+  btn.textContent = '👁️ 顯示此區塊';
+  btn.style.background = 'none';
+}
+
 
 // ==========================================
 // 🖨️ 列印邏輯
@@ -962,7 +931,7 @@ function doBatchPrint() {
           else cInp[idx].value = inp.value;
         });
 
-        clone.querySelectorAll('.btn-row, .records-bar, .form-header button, .overlay').forEach(function(b) { b.remove(); });
+        clone.querySelectorAll('.btn-row, .records-bar, .form-header button, .overlay, .toggle-btn').forEach(function(b) { b.remove(); });
         printArea.appendChild(clone);
       }
     }
@@ -1288,13 +1257,6 @@ function updateEat10(){
   else{s.textContent='正常範圍（總分 '+t+' 分）';s.className='score-badge score-ok';}
 }
 
-function setAllEat10(val) {
-  eat10Items.forEach(function(_, i) {
-    document.getElementById('e' + i).value = val;
-  });
-  updateEat10();
-}
-
 // ==========================================
 // 咀嚼能力篩檢
 // ==========================================
@@ -1307,7 +1269,6 @@ var chewItems=['硬豆干','炒花生','芭樂（整顆）','炸雞','水煮玉�
     tr.innerHTML='<td style="padding-left:10px;">'+item+'</td><td style="text-align:center;"><select id="c'+i+'" onchange="updateChew()" style="width:118px;"><option value="0">容易吃</option><option value="1">有些吃力</option><option value="2">沒辦法吃</option></select></td>';
     tbody.appendChild(tr);
   });
-  buildChewCannotList();
 })();
 
 function updateChew(){
@@ -1317,119 +1278,6 @@ function updateChew(){
   var s=document.getElementById('chewStatus');
   if(t>=4){s.textContent='注意：可能有咀嚼障礙風險（'+t+' 種困難）';s.className='score-badge score-warn';}
   else{s.textContent='正常範圍（'+t+' 種困難）';s.className='score-badge score-ok';}
-}
-
-function setAllChew(val, label) {
-  chewItems.forEach(function(_, i) {
-    var sel = document.getElementById('c' + i);
-    for(var j = 0; j < sel.options.length; j++) {
-      if(parseInt(sel.options[j].value) === val) {
-        if(!label || sel.options[j].text.indexOf(label) >= 0) {
-          sel.selectedIndex = j;
-          break;
-        }
-      }
-    }
-  });
-  updateChew();
-}
-
-// ── 咀嚼無法食用下拉多選 ──
-var chewCannotState = new Set();
-
-function buildChewCannotList() {
-  var container = document.getElementById('chew-cannot-items');
-  if(!container) return;
-  container.innerHTML = '';
-  chewItems.forEach(function(item, i) {
-    var div = document.createElement('div');
-    div.className = 'assess-ms-item' + (chewCannotState.has(i) ? ' sel' : '');
-    div.id = 'chew-cannot-item-' + i;
-    div.innerHTML = '<input type="checkbox" id="chew-cannot-cb-' + i + '"' + (chewCannotState.has(i) ? ' checked' : '') + ' onchange="toggleChewCannot(' + i + ', this.checked)"><label for="chew-cannot-cb-' + i + '">' + item + '</label>';
-    container.appendChild(div);
-  });
-}
-
-function toggleChewCannot(i, checked) {
-  if(checked) chewCannotState.add(i);
-  else chewCannotState.delete(i);
-  var item = document.getElementById('chew-cannot-item-' + i);
-  if(item) item.classList.toggle('sel', checked);
-  updateChewCannotTrigger();
-  renderChewCannotTags();
-}
-
-function chewCannotSelectAll(check, event) {
-  if(event) event.stopPropagation();
-  chewItems.forEach(function(_, i) {
-    if(check) chewCannotState.add(i);
-    else chewCannotState.delete(i);
-    var cb = document.getElementById('chew-cannot-cb-' + i);
-    if(cb) cb.checked = check;
-    var item = document.getElementById('chew-cannot-item-' + i);
-    if(item) item.classList.toggle('sel', check);
-  });
-  updateChewCannotTrigger();
-  renderChewCannotTags();
-}
-
-function updateChewCannotTrigger() {
-  var el = document.getElementById('chew-cannot-text');
-  if(!el) return;
-  if(chewCannotState.size === 0) {
-    el.textContent = '點此勾選「沒辦法吃」的食物…';
-    el.className = 'assess-ms-text';
-  } else {
-    el.textContent = '已選 ' + chewCannotState.size + ' 項食物';
-    el.className = 'assess-ms-text has-sel';
-  }
-}
-
-function renderChewCannotTags() {
-  var d = document.getElementById('chew-cannot-tags');
-  if(!d) return;
-  d.innerHTML = '';
-  chewCannotState.forEach(function(i) {
-    var tag = document.createElement('span');
-    tag.className = 'assess-tag';
-    var name = chewItems[i];
-    var sh = name.length > 14 ? name.substring(0, 14) + '…' : name;
-    tag.innerHTML = sh + '<span class="assess-tag-x" onclick="toggleChewCannot(' + i + ', false); document.getElementById(\'chew-cannot-cb-' + i + '\').checked=false;">×</span>';
-    d.appendChild(tag);
-  });
-}
-
-function applyChewCannot() {
-  if(chewCannotState.size === 0) { alert('請先在下拉清單中勾選無法食用的項目'); return; }
-  chewCannotState.forEach(function(i) {
-    var sel = document.getElementById('c' + i);
-    if(sel) {
-      for(var j = 0; j < sel.options.length; j++) {
-        if(parseInt(sel.options[j].value) === 2) { sel.selectedIndex = j; break; }
-      }
-    }
-  });
-  updateChew();
-  document.getElementById('chew-cannot-dd').classList.remove('open');
-  document.getElementById('chew-cannot-trigger').classList.remove('open');
-  document.getElementById('chew-cannot-arrow').style.transform = '';
-  alert('✅ 已套用至咀嚼能力評估表格（已勾選項目設為「沒辦法吃」）');
-}
-
-// ── 評估多選下拉開關 ──
-function toggleAssessMS(key) {
-  var dd = document.getElementById(key + '-dd');
-  var trigger = document.getElementById(key + '-trigger');
-  var arrow = document.getElementById(key + '-arrow');
-  var isOpen = dd.classList.contains('open');
-  document.querySelectorAll('.assess-ms-dd.open').forEach(function(el) { el.classList.remove('open'); });
-  document.querySelectorAll('.assess-ms-trigger.open').forEach(function(el) { el.classList.remove('open'); });
-  document.querySelectorAll('[id$="-arrow"]').forEach(function(el) { el.style.transform = ''; });
-  if(!isOpen) {
-    dd.classList.add('open');
-    trigger.classList.add('open');
-    if(arrow) arrow.style.transform = 'rotate(180deg)';
-  }
 }
 
 // ==========================================
@@ -1564,10 +1412,8 @@ function updateAllPrintText(){
   ['disease','eathabit','dietHabit','diet','overall'].forEach(function(k){updatePrintText(k);});
 }
 document.addEventListener('click',function(e){
-  if(!e.target.closest('.multiselect-wrap') && !e.target.closest('.assess-multiselect-wrap')){
+  if(!e.target.closest('.multiselect-wrap')){
     document.querySelectorAll('.ms-dd.open,.ms-trigger.open,.ms-arrow.open').forEach(function(el){el.classList.remove('open');});
-    document.querySelectorAll('.assess-ms-dd.open,.assess-ms-trigger.open').forEach(function(el){el.classList.remove('open');});
-    document.querySelectorAll('[id$="-arrow"]').forEach(function(el){ if(el.id === 'chew-cannot-arrow') el.style.transform = ''; });
   }
 });
 
@@ -1610,6 +1456,7 @@ function applyFormDataSync(d, isBatchPrint){
   updateEat10();
   if(d.teethFunc) document.getElementById('teethFunc').value=d.teethFunc;
   if(d.teethOther) document.getElementById('teethOther').value=d.teethOther;
+  checkOtherTeeth();
   if(d.chewRemark) document.getElementById('chewRemark').value=d.chewRemark;
   if(d.chewRemarkOther) document.getElementById('chewRemarkOther').value=d.chewRemarkOther;
   checkChewRemark();
@@ -1619,10 +1466,26 @@ function applyFormDataSync(d, isBatchPrint){
   if(d.noteText) document.getElementById('noteText').value=d.noteText;
   if(d.signature) document.getElementById('signature').value=d.signature;
   if(d.assessDate) document.getElementById('assessDate').value=d.assessDate;
-  if(d.followUpStatus) document.getElementById('followUpStatus').value=d.followUpStatus;
-  if(d.followUpNote) document.getElementById('followUpNote').value=d.followUpNote;
-  if(d.followUpSignature) document.getElementById('followUpSignature').value=d.followUpSignature;
-  if(d.followUpDate) document.getElementById('followUpDate').value=d.followUpDate;
+  
+  // 變更點：載入追蹤資料，並決定是否展開區塊
+  var hasFollowUp = false;
+  if(d.followUpStatus) { document.getElementById('followUpStatus').value=d.followUpStatus; hasFollowUp = true; }
+  if(d.followUpNote) { document.getElementById('followUpNote').value=d.followUpNote; hasFollowUp = true; }
+  if(d.followUpSignature) { document.getElementById('followUpSignature').value=d.followUpSignature; hasFollowUp = true; }
+  if(d.followUpDate) { document.getElementById('followUpDate').value=d.followUpDate; hasFollowUp = true; }
+
+  var content = document.getElementById('followUpContent');
+  var btn = document.getElementById('followUpToggleBtn');
+  var section = document.getElementById('followUpSection');
+  
+  if (hasFollowUp) {
+     content.classList.remove('collapsed');
+     section.classList.remove('print-hide');
+     btn.textContent = '👁️ 隱藏此區塊';
+     btn.style.background = '#E6F1FB';
+  } else {
+     forceCollapseFollowUp();
+  }
   
   ['disease','eathabit','dietHabit','diet','overall'].forEach(function(k){
     if(d.msOpts&&d.msOpts[k]) msOptions[k]=d.msOpts[k];
