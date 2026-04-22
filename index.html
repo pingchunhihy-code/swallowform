@@ -6,6 +6,7 @@
 <title>飲食質地評估表</title>
 
 <script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore-compat.js"></script>
 
 <style>
@@ -18,6 +19,8 @@ body{font-family:"Microsoft JhengHei","PingFang TC",sans-serif;color:#222;font-s
 .sub-title{font-size:13px;color:#666;margin-top:4px;}
 .mgr-btn{position:absolute;right:0;top:0;background:#fff;border:1px solid #d0d0c8;border-radius:6px;padding:5px 12px;font-size:12px;cursor:pointer;color:#555;}
 .mgr-btn:hover{background:#f0f0ec;border-color:#378ADD;color:#185FA5;}
+.logout-btn{position:absolute;left:0;top:0;background:#FCEBEB;border:1px solid #F09595;border-radius:6px;padding:5px 12px;font-size:12px;cursor:pointer;color:#A32D2D;}
+.logout-btn:hover{background:#F7C1C1;}
 .section{background:#fff;border:1px solid #e0e0d8;border-radius:8px;padding:.75rem 1rem;margin-bottom:.6rem; transition: all 0.3s ease;}
 .section-title{font-size:14px;font-weight:bold;margin-bottom:10px;padding:7px 12px;background:#f0f0ec;border-left:4px solid #378ADD;border-radius:4px;color:#1a1a1a; display:flex; justify-content:space-between; align-items:center;}
 .toggle-btn { font-size:12px; font-weight:normal; color:#185FA5; background:none; border:1px solid #185FA5; border-radius:4px; padding:2px 8px; cursor:pointer; }
@@ -135,6 +138,13 @@ tr:hover td{background:#fafaf8;}
 .assess-tag-x{cursor:pointer;font-size:13px;color:#378ADD;}
 .assess-tag-x:hover{color:#A32D2D;}
 
+#loginOverlay { display:flex; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:9999; align-items:center; justify-content:center; flex-direction:column; }
+.login-box { background:#fff; padding:2.5rem 2rem; border-radius:12px; width:340px; text-align:center; box-shadow:0 10px 25px rgba(0,0,0,0.3); }
+.login-box h2 { margin-bottom:1.5rem; color:#185FA5; font-size:20px; }
+.login-box input { width:100%; margin-bottom:1.2rem; padding:12px; font-size:14px; border:1px solid #ccc; border-radius:6px; background:#fafaf8; }
+.login-box button { width:100%; padding:12px; background:#185FA5; color:#fff; font-size:15px; border:none; border-radius:6px; cursor:pointer; font-weight:bold; }
+.login-box button:hover { background:#0C447C; }
+
 .dash-col { flex:1; border:1px solid #d0d0c8; border-radius:8px; padding:10px; background:#fff; display:flex; flex-direction:column;}
 .dash-col h4 { margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid #e0e0e0; font-size:14px; }
 .dash-item { padding:8px 10px; border-bottom:1px solid #f0f0ec; cursor:pointer; display:flex; justify-content:space-between; align-items:center; font-size:13px; }
@@ -145,6 +155,7 @@ tr:hover td{background:#fafaf8;}
 .dash-action-btn { background:#fff; border:1px solid #ccc; border-radius:4px; padding:3px 8px; cursor:pointer; font-size:11px; color:#555; }
 .dash-action-btn:hover { border-color:#185FA5; color:#185FA5; background:#E6F1FB; }
 
+/* ★★★ 列印版面極致壓縮 ★★★ */
 @media print{
   @page{size:A4;margin:10mm 12mm;} 
   body{background:#fff;padding:0;font-size:12px;line-height:1.4;} 
@@ -197,9 +208,19 @@ tr:hover td{background:#fafaf8;}
 </head>
 <body>
 
+<div id="loginOverlay">
+  <div class="login-box">
+    <h2>🔒 系統登入</h2>
+    <input type="email" id="loginEmail" placeholder="請輸入 Email 帳號">
+    <input type="password" id="loginPwd" placeholder="請輸入密碼">
+    <button onclick="doLogin()">登 入</button>
+  </div>
+</div>
+
 <div class="form-wrap" id="mainFormWrap">
 
 <div class="form-header">
+  <button class="logout-btn" onclick="doLogout()">🚪 登出</button>
   <select class="org-select" id="orgSelect" onchange="onOrgChange()">
     <option value="">── 請選擇機構 ──</option>
   </select>
@@ -603,7 +624,29 @@ const firebaseConfig = {
 };
 
 firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
 const db = firebase.firestore();
+
+// ==========================================
+// 登入邏輯
+// ==========================================
+auth.onAuthStateChanged(user => {
+  if (user) {
+    document.getElementById('loginOverlay').style.display = 'none';
+    loadCloudSettings();
+  } else {
+    document.getElementById('loginOverlay').style.display = 'flex';
+  }
+});
+
+function doLogin() {
+  var email = document.getElementById('loginEmail').value;
+  var pwd = document.getElementById('loginPwd').value;
+  if(!email || !pwd) { alert("請輸入 Email 與密碼"); return; }
+  auth.signInWithEmailAndPassword(email, pwd)
+    .catch(err => alert("登入失敗，請檢查帳號密碼是否正確。(" + err.message + ")"));
+}
+function doLogout() { if(confirm("確定要登出嗎？")) { auth.signOut(); } }
 
 // ==========================================
 // 核心變數
@@ -614,7 +657,7 @@ var mgrActiveOrg = null;
 var allCurrentOrgRecords = [];
 
 // ==========================================
-// 載入系統資料 (移除 auth 驗證)
+// 載入系統資料 (含錯誤捕捉)
 // ==========================================
 function loadCloudSettings() {
   db.collection("system").doc("settings").get().then(function(doc) {
@@ -657,7 +700,11 @@ function loadCloudSettings() {
     renderOrgSelect();
   }).catch(function(e) {
     console.error("載入設定失敗", e);
-    alert("載入失敗 (" + e.message + ")\n\n請確定 Firebase 安全規則已設為 if true");
+    if(e.code === 'permission-denied') {
+        alert("🔒 權限不足，無法載入雲端資料。\n\n請確認：\n1. Firebase 安全規則已設定為 (request.auth != null)。\n2. 點擊左上角的「登出」按鈕，並重新登入一次以更新憑證！");
+    } else {
+        alert("載入失敗 (" + e.message + ")");
+    }
   });
 }
 
@@ -1630,10 +1677,24 @@ function applyFormDataSync(d, isBatchPrint){
   checkChewRemark();
   if(d.chew) d.chew.forEach(function(v,i){var el=document.getElementById('c'+i);if(el)el.value=v;});
   updateChew();
+  
+  // 向下相容：處理舊單選資料
+  if (d.dietHabit && typeof d.dietHabit === 'string' && (!d.msSelected || !d.msSelected['dietHabit'])) {
+    if (!d.msSelected) d.msSelected = {};
+    var idx = msOptions['dietHabit'].indexOf(d.dietHabit);
+    if (idx !== -1) {
+      d.msSelected['dietHabit'] = [idx];
+    } else {
+      msOptions['dietHabit'].push(d.dietHabit);
+      d.msSelected['dietHabit'] = [msOptions['dietHabit'].length - 1];
+    }
+  }
+
   if(d.mealTime) document.getElementById('mealTime').value=d.mealTime;
   if(d.noteText) document.getElementById('noteText').value=d.noteText;
   if(d.signature) document.getElementById('signature').value=d.signature;
   if(d.assessDate) document.getElementById('assessDate').value=d.assessDate;
+  
   if(d.followUpStatus) document.getElementById('followUpStatus').value=d.followUpStatus;
   if(d.followUpNote) document.getElementById('followUpNote').value=d.followUpNote;
   if(d.followUpSignature) document.getElementById('followUpSignature').value=d.followUpSignature;
@@ -1680,4 +1741,3 @@ document.getElementById('assessDate').value=new Date().toISOString().split('T')[
 </script>
 </body>
 </html>
-幫我把 firebase 安全規則還原原本 需要帳號密碼 才能顯示  然後剛剛要求得功能也要有 謝謝
