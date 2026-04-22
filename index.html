@@ -6,7 +6,6 @@
 <title>飲食質地評估表</title>
 
 <script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore-compat.js"></script>
 
 <style>
@@ -19,8 +18,6 @@ body{font-family:"Microsoft JhengHei","PingFang TC",sans-serif;color:#222;font-s
 .sub-title{font-size:13px;color:#666;margin-top:4px;}
 .mgr-btn{position:absolute;right:0;top:0;background:#fff;border:1px solid #d0d0c8;border-radius:6px;padding:5px 12px;font-size:12px;cursor:pointer;color:#555;}
 .mgr-btn:hover{background:#f0f0ec;border-color:#378ADD;color:#185FA5;}
-.logout-btn{position:absolute;left:0;top:0;background:#FCEBEB;border:1px solid #F09595;border-radius:6px;padding:5px 12px;font-size:12px;cursor:pointer;color:#A32D2D;}
-.logout-btn:hover{background:#F7C1C1;}
 .section{background:#fff;border:1px solid #e0e0d8;border-radius:8px;padding:.75rem 1rem;margin-bottom:.6rem;}
 .section-title{font-size:14px;font-weight:bold;margin-bottom:10px;padding:7px 12px;background:#f0f0ec;border-left:4px solid #378ADD;border-radius:4px;color:#1a1a1a;}
 .field-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-bottom:8px;}
@@ -111,13 +108,6 @@ tr:hover td{background:#fafaf8;}
 .reset-btn:hover{background:#f5f5f5;}
 .print-disease{display:none;}
 
-#loginOverlay { display:flex; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:9999; align-items:center; justify-content:center; flex-direction:column; }
-.login-box { background:#fff; padding:2.5rem 2rem; border-radius:12px; width:340px; text-align:center; box-shadow:0 10px 25px rgba(0,0,0,0.3); }
-.login-box h2 { margin-bottom:1.5rem; color:#185FA5; font-size:20px; }
-.login-box input { width:100%; margin-bottom:1.2rem; padding:12px; font-size:14px; border:1px solid #ccc; border-radius:6px; background:#fafaf8; }
-.login-box button { width:100%; padding:12px; background:#185FA5; color:#fff; font-size:15px; border:none; border-radius:6px; cursor:pointer; font-weight:bold; }
-.login-box button:hover { background:#0C447C; }
-
 .dash-col { flex:1; border:1px solid #d0d0c8; border-radius:8px; padding:10px; background:#fff; display:flex; flex-direction:column;}
 .dash-col h4 { margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid #e0e0e0; font-size:14px; }
 .dash-item { padding:8px 10px; border-bottom:1px solid #f0f0ec; cursor:pointer; display:flex; justify-content:space-between; align-items:center; font-size:13px; }
@@ -135,7 +125,7 @@ tr:hover td{background:#fafaf8;}
   .form-header{padding-bottom:2px;margin-bottom:4px;}
   .form-header .sub-title{font-size:12px;margin-top:0;}
   .org-select{font-size:15px;border-bottom:1px solid #666;padding:0;}
-  .mgr-btn,.logout-btn,.btn-row,.overlay,.records-bar{display:none!important;}
+  .mgr-btn,.btn-row,.overlay,.records-bar{display:none!important;}
   .section{padding:.3rem .5rem;margin-bottom:.3rem;border:1px solid #aaa;border-radius:3px;page-break-inside:avoid;} 
   .section-title{font-size:13px;margin-bottom:4px;padding:3px 6px;background:#eee;border-left:3px solid #666;}
   .field-row{gap:4px;margin-bottom:4px;} 
@@ -164,19 +154,9 @@ tr:hover td{background:#fafaf8;}
 </head>
 <body>
 
-<div id="loginOverlay">
-  <div class="login-box">
-    <h2>🔒 系統登入</h2>
-    <input type="email" id="loginEmail" placeholder="請輸入 Email 帳號">
-    <input type="password" id="loginPwd" placeholder="請輸入密碼">
-    <button onclick="doLogin()">登 入</button>
-  </div>
-</div>
-
 <div class="form-wrap" id="mainFormWrap">
 
 <div class="form-header">
-  <button class="logout-btn" onclick="doLogout()">🚪 登出</button>
   <select class="org-select" id="orgSelect" onchange="onOrgChange()">
     <option value="">── 請選擇機構 ──</option>
   </select>
@@ -498,29 +478,14 @@ const firebaseConfig = {
 };
 
 firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
 const db = firebase.firestore();
 
 // ==========================================
-// 登入邏輯
+// 網頁載入後直接啟動，跳過身分驗證
 // ==========================================
-auth.onAuthStateChanged(user => {
-  if (user) {
-    document.getElementById('loginOverlay').style.display = 'none';
-    loadCloudSettings();
-  } else {
-    document.getElementById('loginOverlay').style.display = 'flex';
-  }
+document.addEventListener("DOMContentLoaded", function() {
+  loadCloudSettings();
 });
-
-function doLogin() {
-  var email = document.getElementById('loginEmail').value;
-  var pwd = document.getElementById('loginPwd').value;
-  if(!email || !pwd) { alert("請輸入 Email 與密碼"); return; }
-  auth.signInWithEmailAndPassword(email, pwd)
-    .catch(err => alert("登入失敗，請檢查帳號密碼是否正確。(" + err.message + ")"));
-}
-function doLogout() { if(confirm("確定要登出嗎？")) { auth.signOut(); } }
 
 // ==========================================
 // 核心變數
@@ -554,9 +519,9 @@ function loadCloudSettings() {
   }).catch(e => {
     console.error("載入設定失敗", e);
     if(e.message.includes('Missing or insufficient permissions')) {
-        alert("⚠️ 雲端設定載入失敗：資料庫權限不足！\n請確認 Firebase 控制台中的 Firestore Rules 安全規則是否已開啟。");
+        alert("⚠️ 雲端設定載入失敗：資料庫權限不足！\n請務必前往 Firebase 控制台將 Firestore Rules 修改為 allow read, write: if true; 才能免登入存取。");
     } else {
-        alert("載入失敗 (" + e.message + ")\n\n💡 建議：請點擊網頁左上角的「登出」，然後重新登入，即可恢復正常連線！");
+        alert("載入失敗 (" + e.message + ")");
     }
   });
 }
@@ -611,7 +576,7 @@ function renderRecordSelect() {
     console.error("讀取個案列表失敗", e);
     sel.innerHTML = '<option value="">── 讀取失敗 ──</option>';
     if(e.message.includes('Missing or insufficient permissions')) {
-        alert("⚠️ 讀取雲端清單失敗：資料庫權限不足！\n請至 Firebase 將安全規則改為 request.auth != null。");
+        alert("⚠️ 讀取雲端清單失敗：資料庫權限不足！\n請至 Firebase 將安全規則改為 allow read, write: if true;");
     }
   });
 }
@@ -992,12 +957,12 @@ function renderOrgSelect() {
     var opt = document.createElement('option'); opt.value = o.id; opt.textContent = o.name; sel.appendChild(opt);
   });
   
-  // 【關鍵修正】：登入後自動選擇機構，並立即觸發雲端讀取事件
+  // 自動選擇機構，並立即觸發雲端讀取事件
   if (cur && orgs.find(function(o){ return o.id === cur; })) {
     sel.value = cur;
   } else if (orgs.length > 0) {
     sel.value = orgs[0].id;
-    onOrgChange(); // 直接觸發更新下拉選單與雲端拉取動作
+    onOrgChange(); 
   }
 }
 
