@@ -199,6 +199,7 @@ tr:hover td{background:#fafaf8;}
       <span style="font-size:13px;color:#185FA5;white-space:nowrap;font-weight:bold;">☁️ 雲端資料庫</span>
       <span id="recOrgLabel" style="font-size:12px;color:#555;background:#fff;border-radius:4px;padding:3px 8px;white-space:nowrap;">請先選擇機構</span>
       <button class="rec-btn outline" onclick="openDashboard()" style="margin-left:10px;">📊 評估進度與篩選</button>
+      <button class="rec-btn outline" onclick="openClosedArchive()" style="border-color:#8B6914; color:#8B6914;">🗂️ 結案查詢</button>
       <button class="rec-btn" onclick="saveRecord()" style="margin-left:auto;">💾 儲存至雲端</button>
     </div>
     <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
@@ -222,6 +223,7 @@ tr:hover td{background:#fafaf8;}
         <select id="nameSelect" onchange="onNameChange()"><option value="">── 請先選擇機構 ──</option></select>
       </div>
       <button class="dash-action-btn" style="height:28px; margin-bottom:1px; padding:0 10px;" onclick="openTransferModal()">🔄 轉出</button>
+      <button class="dash-action-btn" style="height:28px; margin-bottom:1px; padding:0 10px; border-color:#F09595; color:#A32D2D;" onclick="openCloseModal()">📁 結案</button>
     </div>
     <div class="field"><label>性別</label><select id="gender"><option>男</option><option>女</option></select></div>
     <div class="field"><label>年齡</label><input type="number" id="age" placeholder="歲" min="0" max="120"></div>
@@ -415,7 +417,51 @@ tr:hover td{background:#fafaf8;}
   </div>
 </div>
 
-<div class="overlay" id="mgrOverlay" onclick="overlayClick(event, 'mgrOverlay')">
+<div class="overlay" id="closeOverlay" onclick="overlayClick(event, 'closeOverlay')">
+  <div class="modal" style="width:420px;">
+    <div class="modal-title">
+      <span>📁 個案結案</span>
+      <span class="modal-close" onclick="document.getElementById('closeOverlay').classList.remove('show')">×</span>
+    </div>
+    <div style="background:#FFF8E1; border:1px solid #FFD54F; border-radius:8px; padding:12px; margin-bottom:16px; font-size:13px; color:#5D4037;">
+      ⚠️ 結案後，此個案將從一般名單移除，<strong>雲端評估紀錄完整保留</strong>，可隨時從「結案查詢」調閱。
+    </div>
+    <p style="font-size:13px; margin-bottom:12px;">即將結案長輩：<strong id="closeTargetName" style="color:#A32D2D; font-size:15px;"></strong></p>
+    <div class="field" style="margin-bottom:12px;">
+      <label>結案日期</label>
+      <input type="date" id="closeDate" style="font-size:13px; padding:6px 8px;">
+    </div>
+    <div class="field" style="margin-bottom:20px;">
+      <label>結案原因（選填）</label>
+      <select id="closeReason" style="font-size:13px; padding:6px 8px;">
+        <option value="">請選擇</option>
+        <option>身故</option>
+        <option>轉機構</option>
+        <option>返家自行照顧</option>
+        <option>長期住院</option>
+        <option>其他</option>
+      </select>
+      <input type="text" id="closeReasonOther" placeholder="請輸入原因" style="display:none; margin-top:6px; font-size:13px; padding:6px 8px;">
+    </div>
+    <button class="save-btn" style="width:100%; background:#8B0000;" onclick="doCloseCase()">確認結案</button>
+  </div>
+</div>
+
+<div class="overlay" id="closedArchiveOverlay" onclick="overlayClick(event, 'closedArchiveOverlay')">
+  <div class="modal" style="width:700px;">
+    <div class="modal-title">
+      <span>🗂️ 結案個案查詢</span>
+      <span class="modal-close" onclick="document.getElementById('closedArchiveOverlay').classList.remove('show')">×</span>
+    </div>
+    <div style="display:flex; gap:8px; margin-bottom:12px; align-items:center; flex-wrap:wrap;">
+      <input type="text" id="closedSearchInput" placeholder="🔍 搜尋姓名…" style="flex:1; min-width:120px; font-size:13px; padding:6px 10px;" oninput="renderClosedArchive()">
+      <select id="closedOrgFilter" onchange="renderClosedArchive()" style="font-size:13px; padding:6px 8px;">
+        <option value="">所有機構</option>
+      </select>
+    </div>
+    <div id="closedArchiveList" style="max-height:420px; overflow-y:auto; border:1px solid #e0e0d8; border-radius:8px;"></div>
+  </div>
+</div>
   <div class="modal">
     <div class="modal-title">
       <span>⚙ 管理機構與人員 (將同步至雲端)</span>
@@ -523,6 +569,7 @@ document.addEventListener("DOMContentLoaded", function() {
 // ==========================================
 var orgs = [];
 var members = {};
+var closedMembers = {}; // { orgId: [ { name, closedDate, reason } ] }
 var mgrActiveOrg = null;
 var allCurrentOrgRecords = [];
 var activeMonthFilter = 'ALL'; // ← 目前選取的月份篩選
@@ -533,6 +580,7 @@ function loadCloudSettings() {
       var data = doc.data();
       orgs = data.orgs || [];
       members = data.members || {};
+      closedMembers = data.closedMembers || {};
       if(data.msOptions) {
          ['disease','eathabit','diet','overall'].forEach(function(k){
             if(data.msOptions[k]) {
@@ -562,6 +610,7 @@ function saveCloudSettings() {
   db.collection("system").doc("settings").set({ 
     orgs: orgs, 
     members: members,
+    closedMembers: closedMembers,
     msOptions: msOptions 
   }).catch(e => {
     console.error("儲存設定失敗", e);
@@ -1005,8 +1054,152 @@ async function doTransfer() {
 }
 
 // ==========================================
-// Dashboard 邏輯
+// 結案管理
 // ==========================================
+function openCloseModal() {
+  var name = document.getElementById('nameSelect').value;
+  var orgId = currentOrgId();
+  if (!name || orgId === '__none__') { alert("請先選擇要結案的長輩姓名！"); return; }
+  document.getElementById('closeTargetName').textContent = name;
+  document.getElementById('closeDate').value = new Date().toISOString().split('T')[0];
+  document.getElementById('closeReason').value = '';
+  document.getElementById('closeReasonOther').style.display = 'none';
+  document.getElementById('closeReason').onchange = function() {
+    document.getElementById('closeReasonOther').style.display = this.value === '其他' ? '' : 'none';
+  };
+  document.getElementById('closeOverlay').classList.add('show');
+}
+
+function doCloseCase() {
+  var name = document.getElementById('closeTargetName').textContent;
+  var orgId = currentOrgId();
+  var closeDate = document.getElementById('closeDate').value || new Date().toISOString().split('T')[0];
+  var reasonSel = document.getElementById('closeReason').value;
+  var reason = reasonSel === '其他' ? document.getElementById('closeReasonOther').value.trim() || '其他' : (reasonSel || '未填寫');
+
+  if (!confirm('確定將「' + name + '」結案？\n結案後此長輩將從名單移除，但所有評估紀錄保留在雲端。')) return;
+
+  // 從現役名單移除
+  if (members[orgId]) {
+    members[orgId] = members[orgId].filter(function(n) { return n !== name; });
+  }
+  // 加入結案名單
+  if (!closedMembers[orgId]) closedMembers[orgId] = [];
+  // 避免重複
+  closedMembers[orgId] = closedMembers[orgId].filter(function(c) { return c.name !== name; });
+  closedMembers[orgId].push({ name: name, closedDate: closeDate, reason: reason, orgName: currentOrgName() });
+
+  saveCloudSettings();
+  document.getElementById('closeOverlay').classList.remove('show');
+  onOrgChange();
+  resetForm(false);
+  alert('✅ 「' + name + '」已結案。\n可至「🗂️ 結案查詢」調閱其歷史評估資料。');
+}
+
+function openClosedArchive() {
+  // 填入機構篩選器
+  var sel = document.getElementById('closedOrgFilter');
+  sel.innerHTML = '<option value="">所有機構</option>';
+  orgs.forEach(function(o) {
+    sel.appendChild(new Option(o.name, o.id));
+  });
+  renderClosedArchive();
+  document.getElementById('closedArchiveOverlay').classList.add('show');
+}
+
+function renderClosedArchive() {
+  var keyword = document.getElementById('closedSearchInput').value.trim().toLowerCase();
+  var filterOrg = document.getElementById('closedOrgFilter').value;
+  var list = document.getElementById('closedArchiveList');
+  list.innerHTML = '';
+
+  // 收集所有結案個案
+  var all = [];
+  Object.keys(closedMembers).forEach(function(orgId) {
+    if (filterOrg && orgId !== filterOrg) return;
+    (closedMembers[orgId] || []).forEach(function(c) {
+      all.push({ orgId: orgId, orgName: c.orgName || (orgs.find(function(o){ return o.id===orgId; }) || {}).name || orgId, name: c.name, closedDate: c.closedDate, reason: c.reason });
+    });
+  });
+
+  // 關鍵字篩選
+  if (keyword) all = all.filter(function(c) { return c.name.toLowerCase().includes(keyword); });
+
+  // 依結案日期排序（新→舊）
+  all.sort(function(a, b) { return (b.closedDate || '').localeCompare(a.closedDate || ''); });
+
+  if (all.length === 0) {
+    list.innerHTML = '<div style="color:#999; font-size:13px; text-align:center; padding:30px;">無結案個案</div>';
+    return;
+  }
+
+  all.forEach(function(c) {
+    var row = document.createElement('div');
+    row.style.cssText = 'display:flex; align-items:center; gap:10px; padding:10px 14px; border-bottom:1px solid #f0f0ec; font-size:13px;';
+    row.innerHTML =
+      '<span style="font-weight:bold; min-width:70px;">' + c.name + '</span>' +
+      '<span style="color:#888; font-size:12px; min-width:90px;">📅 ' + (c.closedDate || '—') + '</span>' +
+      '<span style="background:#FFF3E0; color:#8B6914; border-radius:10px; padding:2px 8px; font-size:11px; min-width:60px; text-align:center;">' + (c.reason || '—') + '</span>' +
+      '<span style="color:#aaa; font-size:11px; flex:1;">' + (c.orgName || '') + '</span>' +
+      '<button class="dash-action-btn" onclick="browseClosedRecords(\'' + c.orgId + '\',\'' + c.name + '\')">查看評估紀錄</button>' +
+      '<button class="dash-action-btn" style="border-color:#85B7EB; color:#185FA5;" onclick="reinstateCase(\'' + c.orgId + '\',\'' + c.name + '\')">↩ 復歸名單</button>';
+    list.appendChild(row);
+  });
+}
+
+function browseClosedRecords(orgId, name) {
+  // 切換機構、選人、篩選紀錄
+  document.getElementById('closedArchiveOverlay').classList.remove('show');
+  document.getElementById('orgSelect').value = orgId;
+
+  // 手動建立姓名選單（含結案個案）
+  var sel = document.getElementById('nameSelect');
+  sel.innerHTML = '<option value="">── 請選擇姓名 ──</option>';
+  var allInOrg = (members[orgId] || []).concat((closedMembers[orgId] || []).map(function(c){ return c.name; }));
+  allInOrg.forEach(function(n) {
+    var o = document.createElement('option'); o.value = n; o.textContent = n; sel.appendChild(o);
+  });
+  sel.value = name;
+
+  var lbl = document.getElementById('recOrgLabel');
+  var found = orgs.find(function(o){ return o.id===orgId; });
+  if (lbl && found) lbl.textContent = '目前機構：' + found.name + '（含結案）';
+
+  // 載入該機構所有雲端紀錄，然後篩選
+  db.collection("records").where("orgId", "==", orgId).get().then(function(snap) {
+    allCurrentOrgRecords = [];
+    snap.forEach(function(doc) { allCurrentOrgRecords.push(doc.data()); });
+
+    // 只顯示此人的紀錄
+    var personRecords = allCurrentOrgRecords.filter(function(r) { return r.data && r.data.name === name; });
+    var recSel = document.getElementById('recordSelect');
+    recSel.innerHTML = '<option value="">── 選擇雲端儲存個案 ──</option>';
+    personRecords.sort(function(a,b){ return (b.recordKey||'').localeCompare(a.recordKey||''); }).forEach(function(r) {
+      recSel.appendChild(new Option(r.recordKey, r.recordKey));
+    });
+    buildMonthFilterBtns(allCurrentOrgRecords);
+    if (personRecords.length > 0) {
+      recSel.value = personRecords[0].recordKey;
+      loadRecord();
+      alert('📋 已載入「' + name + '」（結案個案）的最新評估紀錄。\n共有 ' + personRecords.length + ' 筆紀錄，可由下拉選單切換。');
+    } else {
+      alert('「' + name + '」目前無雲端評估紀錄。');
+    }
+  });
+}
+
+function reinstateCase(orgId, name) {
+  if (!confirm('確定將「' + name + '」復歸至現役名單嗎？')) return;
+  if (!members[orgId]) members[orgId] = [];
+  if (!members[orgId].includes(name)) members[orgId].push(name);
+  closedMembers[orgId] = (closedMembers[orgId] || []).filter(function(c) { return c.name !== name; });
+  saveCloudSettings();
+  renderClosedArchive();
+  if (document.getElementById('orgSelect').value === orgId) onOrgChange();
+  alert('✅ 「' + name + '」已復歸至現役名單。');
+}
+
+
 function openDashboard() {
   var orgId = currentOrgId();
   if(!orgId || orgId === '__none__') { alert("請先在左上角選擇機構，才能查看進度總覽。"); return; }
@@ -1031,6 +1224,8 @@ function renderDashboard() {
   var year = document.getElementById('filterYear').value;
   var period = document.getElementById('filterPeriod').value;
   var orgMembers = members[currentOrgId()] || [];
+  // 結案個案不出現在「尚未評估」清單，但若有紀錄仍顯示於「已評估」
+  var closedNames = new Set((closedMembers[currentOrgId()] || []).map(function(c){ return c.name; }));
   var filteredRecords = allCurrentOrgRecords.filter(function(r) {
     if(!r.data || !r.data.assessDate) return false;
     var d = new Date(r.data.assessDate);
@@ -1046,7 +1241,7 @@ function renderDashboard() {
     return false;
   });
   var doneNames = new Set(filteredRecords.map(function(r) { return r.data.name; }));
-  var pendingNames = orgMembers.filter(function(m) { return !doneNames.has(m); });
+  var pendingNames = orgMembers.filter(function(m) { return !doneNames.has(m) && !closedNames.has(m); });
   document.getElementById('countDone').textContent = doneNames.size;
   document.getElementById('countPending').textContent = pendingNames.length;
   var doneHtml = Array.from(doneNames).map(function(name) {
@@ -1169,6 +1364,21 @@ function renderMemberList() {
     row.innerHTML = '<input type="text" value="' + m + '" onchange="members[mgrActiveOrg][' + i + ']=this.value"><button class="del-btn" onclick="delMember(' + i + ')">刪除</button>';
     d.appendChild(row);
   });
+  // 顯示結案個案（灰色、可復歸）
+  var closed = closedMembers[mgrActiveOrg] || [];
+  if (closed.length > 0) {
+    var sep = document.createElement('div');
+    sep.style.cssText = 'margin-top:10px; padding:5px 0 4px; font-size:11px; color:#888; border-top:1px dashed #d0d0c8; font-weight:bold;';
+    sep.textContent = '── 結案個案（歷史紀錄保留中）──';
+    d.appendChild(sep);
+    closed.forEach(function(c, i) {
+      var row = document.createElement('div'); row.className = 'mgr-row';
+      row.style.opacity = '0.6';
+      row.innerHTML = '<span style="flex:1; font-size:13px; color:#555; padding:5px 8px; background:#f5f5f2; border-radius:4px; border:1px solid #d0d0c8;">📁 ' + c.name + ' <small>(' + (c.closedDate||'') + ' · ' + (c.reason||'') + ')</small></span>' +
+        '<button class="add-btn" onclick="reinstateCase(\'' + mgrActiveOrg + '\',\'' + c.name + '\'); renderMemberList();" style="white-space:nowrap;">↩ 復歸</button>';
+      d.appendChild(row);
+    });
+  }
 }
 
 function addMember() {
