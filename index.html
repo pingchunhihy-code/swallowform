@@ -121,11 +121,10 @@ tr:hover td{background:#fafaf8;}
 .dash-action-btn { background:#fff; border:1px solid #ccc; border-radius:4px; padding:3px 8px; cursor:pointer; font-size:11px; color:#555; }
 .dash-action-btn:hover { border-color:#185FA5; color:#185FA5; background:#E6F1FB; }
 
+/* ─── 列印專用樣式 ─── */
 @media print{
   @page{size:A4;margin:8mm 10mm;}
   body{background:#fff;padding:0;font-size:12px;line-height:1.35;}
-  
-  /* 解決 PDF T3Font_7 報錯：強制指定字體 */
   * { font-family: "Microsoft JhengHei", "PingFang TC", sans-serif !important; }
   
   .form-wrap{box-shadow:none;padding:0;border-radius:0;max-width:100%;}
@@ -137,20 +136,19 @@ tr:hover td{background:#fafaf8;}
   .section-title{font-size:13px;margin-bottom:4px;padding:3px 6px;background:#eee;border-left:3px solid #666;}
   .field-row{gap:4px;margin-bottom:4px;}
   .field label{font-size:10px;margin-bottom:1px;}
-  input,select{font-size:12px;padding:2px 4px;background:#fff;border:1px solid #aaa;}
   
-  /* 修正：移除 height: auto !important，改為讓 JS 的計算高度生效，並設定 hidden 避免滾動條影響寬度 */
+  input, select { font-size:12px; padding:2px 4px; background:#fff; border:1px solid #aaa; }
+  
+  /* Textarea 完全交由 JS 控制高度，關閉所有捲動與限制 */
   textarea {
     font-size: 12px;
     padding: 2px 4px;
-    background: #fff;
+    background: transparent;
     border: 1px solid #aaa;
-    min-height: 0 !important;
-    max-height: none !important;
     overflow: hidden !important; 
     resize: none !important;
     white-space: pre-wrap !important;
-    word-break: break-all !important;
+    word-break: break-word !important;
     display: block;
     box-sizing: border-box;
   }
@@ -166,20 +164,19 @@ tr:hover td{background:#fafaf8;}
   .score-badge{font-size:11px;padding:1px 6px;}
   p {margin-bottom: 2px!important; font-size:11px!important;}
   .field-row[style*="background"] { background:transparent!important; border:none!important; padding:0!important;}
+  
   #batchPrintArea { display:block!important; width:100%; }
   #batchPrintArea .form-wrap { display:block!important; page-break-after: always; margin-bottom:0; box-shadow:none; }
   #batchPrintArea .form-wrap:last-child { page-break-after: auto; }
   
-  /* 解決 PDF T3Font_7 報錯：將 transparent 改為 hidden 避免 Adobe 誤判渲染 */
-  ::-webkit-input-placeholder { visibility: hidden !important; }
-  :-moz-placeholder { visibility: hidden !important; }
-  ::-moz-placeholder { visibility: hidden !important; }
-  :-ms-input-placeholder { visibility: hidden !important; }
-  
-  /* 新增的列印設定 */
+  /* 複評紀錄列印排版優化 */
   .ra-ctrl-btn { display: none !important; }
   body.hide-reassess #reassessSection { display: none !important; }
-  .reassess-row { page-break-inside: avoid; }
+  .reassess-item { border: 1px solid #aaa !important; margin-bottom: 6px !important; page-break-inside: avoid; }
+  .reassess-item > div:first-child { background: transparent !important; border-bottom: 1px dashed #aaa !important; padding: 4px 6px !important; }
+  .reassess-item > div:last-child { padding: 4px 6px !important; }
+  .ra-note { border: none !important; padding: 0 !important; font-size: 12px !important; }
+  .ra-date, .ra-status, .ra-sign { border: none !important; border-bottom: 1px solid #aaa !important; border-radius: 0 !important; background: transparent !important; padding: 0 2px !important; }
 }
 </style>
 </head>
@@ -848,28 +845,37 @@ function clearFormKeepIdentity(){
 }
 
 // ==========================================
-// 複評紀錄動態欄位
+// 複評紀錄動態欄位 (全新卡片式排版)
 // ==========================================
 function addReassessRow(data) {
   var container = document.getElementById('reassessContainer');
   var row = document.createElement('div');
-  row.className = 'reassess-row field-row';
-  row.style.cssText = 'background:#fafaf8; padding:10px; border:1px solid #e0e0d8; border-radius:5px; margin-bottom:8px; align-items:flex-end; position:relative;';
+  row.className = 'reassess-item';
+  row.style.cssText = 'border: 1px solid #d0d0c8; border-radius: 6px; margin-bottom: 10px; background: #fff; overflow:hidden; page-break-inside: avoid;';
 
   row.innerHTML = `
-    <div class="field"><label>追蹤日期</label><input type="date" class="ra-date"></div>
-    <div class="field"><label>計畫調整</label>
-      <select class="ra-status">
-        <option value="">請選擇</option>
-        <option value="維持原飲食計畫">維持原飲食計畫</option>
-        <option value="更改飲食計畫">更改飲食計畫</option>
-      </select>
+    <div style="display:flex; background: #f0f0ec; padding: 6px 10px; align-items: center; gap: 10px; border-bottom: 1px solid #d0d0c8; flex-wrap: wrap;">
+      <div style="display:flex; align-items:center; gap:6px;">
+        <span style="font-size:12px; font-weight:bold; color:#555;">追蹤日期</span>
+        <input type="date" class="ra-date" style="padding:2px 6px; font-size:12px; width:130px; background:#fff; margin:0;">
+      </div>
+      <div style="display:flex; align-items:center; gap:6px;">
+        <span style="font-size:12px; font-weight:bold; color:#555;">計畫調整</span>
+        <select class="ra-status" style="padding:2px 6px; font-size:12px; background:#fff; margin:0;">
+          <option value="">請選擇</option>
+          <option value="維持原飲食計畫">維持原飲食計畫</option>
+          <option value="更改飲食計畫">更改飲食計畫</option>
+        </select>
+      </div>
+      <div style="display:flex; align-items:center; gap:6px; margin-left:auto;">
+        <span style="font-size:12px; font-weight:bold; color:#555;">簽名</span>
+        <input type="text" class="ra-sign" style="padding:2px 6px; font-size:12px; width:100px; background:#fff; margin:0;" placeholder="簽名">
+      </div>
+      <button class="del-btn ra-ctrl-btn" style="padding:3px 8px; font-size:11px; margin:0;" onclick="removeReassessRow(this)">✕ 刪除</button>
     </div>
-    <div class="field" style="flex:2;"><label>評估說明</label>
-      <textarea class="ra-note" rows="1" placeholder="請輸入說明..." oninput="autoGrowTextarea(this)" style="resize:vertical; overflow:hidden; width:100%;"></textarea>
+    <div style="padding: 8px 10px;">
+      <textarea class="ra-note" rows="2" placeholder="請輸入評估說明..." oninput="autoGrowTextarea(this)" style="width:100%; border:none; resize:vertical; font-size:13px; background:transparent; padding:0; outline:none; overflow:hidden;"></textarea>
     </div>
-    <div class="field"><label>簽名</label><input type="text" class="ra-sign" placeholder="評估人員"></div>
-    <button class="del-btn ra-ctrl-btn" style="position:absolute; top:5px; right:5px; padding:2px 6px; font-size:10px;" onclick="removeReassessRow(this)">✕</button>
   `;
   container.appendChild(row);
 
@@ -878,12 +884,12 @@ function addReassessRow(data) {
     row.querySelector('.ra-status').value = data.status || '';
     row.querySelector('.ra-note').value = data.note || '';
     row.querySelector('.ra-sign').value = data.sign || '';
-    autoGrowTextarea(row.querySelector('.ra-note'));
+    setTimeout(() => autoGrowTextarea(row.querySelector('.ra-note')), 10);
   }
 }
 
 function removeReassessRow(btn) {
-  btn.parentElement.remove();
+  btn.closest('.reassess-item').remove();
 }
 
 function collectFormData() {
@@ -901,7 +907,7 @@ function collectFormData() {
   });
   
   var reassessments = [];
-  document.querySelectorAll('.reassess-row').forEach(function(row) {
+  document.querySelectorAll('.reassess-item').forEach(function(row) {
     reassessments.push({
       date: row.querySelector('.ra-date').value,
       status: row.querySelector('.ra-status').value,
@@ -968,8 +974,31 @@ function exportJSON() {
 }
 
 // ==========================================
-// 🖨️ 列印邏輯
+// 🖨️ 列印邏輯 (包含清空 Placeholder 防止 T3Font)
 // ==========================================
+function prepareForPrint(rootElement) {
+  // 強制重算所有 textarea 高度
+  rootElement.querySelectorAll('textarea').forEach(function(ta) {
+    ta.style.height = '1px';
+    ta.style.height = (ta.scrollHeight + 2) + 'px';
+  });
+  // 終極解決 T3Font：直接把 placeholder 文字清空
+  rootElement.querySelectorAll('input, textarea').forEach(function(el) {
+    if (el.placeholder) {
+      el.dataset.placeholder = el.placeholder;
+      el.placeholder = '';
+    }
+  });
+}
+
+function restoreAfterPrint(rootElement) {
+  rootElement.querySelectorAll('input, textarea').forEach(function(el) {
+    if (el.dataset.placeholder) {
+      el.placeholder = el.dataset.placeholder;
+    }
+  });
+}
+
 function openPrintModal() {
   var orgId = currentOrgId();
   if(!orgId || orgId === '__none__') {
@@ -1006,16 +1035,15 @@ function selectAllPrint(check) {
 
 function doPrintSingle() {
   updateAllPrintText();
+  prepareForPrint(document.body);
   
-  // 列印前強制所有 textarea 重新計算高度以防被截斷
-  document.querySelectorAll('textarea').forEach(function(el){ autoGrowTextarea(el); });
-
   var printCb = document.getElementById('printReassessCb');
   document.body.classList.toggle('hide-reassess', !printCb.checked);
   
   window.print();
   
   document.body.classList.remove('hide-reassess');
+  restoreAfterPrint(document.body);
 }
 
 function doBatchPrint() {
@@ -1072,10 +1100,8 @@ function doBatchPrint() {
         clone.querySelectorAll('.btn-row, .records-bar, .form-header button, .overlay').forEach(function(b) { b.remove(); });
         printArea.appendChild(clone);
         
-        // 【關鍵修復】：等待 DOM 附加到畫面後，再對 clone 裡面的 textarea 計算高度！
-        clone.querySelectorAll('textarea').forEach(function(ta) {
-          autoGrowTextarea(ta);
-        });
+        // 確保克隆對象附加到畫面上後，再進行高度計算和 placeholder 消除
+        prepareForPrint(clone);
       }
     }
 
@@ -1750,7 +1776,6 @@ function applyFormDataSync(d, isBatchPrint){
     }
   });
 
-  // 載入複評紀錄
   document.getElementById('reassessContainer').innerHTML = '';
   if (d.reassessments && d.reassessments.length > 0) {
     d.reassessments.forEach(function(r) { addReassessRow(r); });
@@ -1763,15 +1788,14 @@ function applyFormDataSync(d, isBatchPrint){
 // 說明欄自動撐高（螢幕 & 列印）
 // ==========================================
 function autoGrowTextarea(el){
-  el.style.height = '1px'; // 先重置高度強迫重新計算 (避免被限制住)
-  el.style.height = (el.scrollHeight + 2) + 'px'; // +2px 避免邊框遮切
+  el.style.height = '1px';
+  el.style.height = (el.scrollHeight + 2) + 'px';
 }
 window.addEventListener('beforeprint',function(){
-  document.querySelectorAll('textarea').forEach(function(el){
-    autoGrowTextarea(el);
-  });
+  prepareForPrint(document.body);
 });
 window.addEventListener('afterprint',function(){
+  restoreAfterPrint(document.body);
   document.querySelectorAll('textarea').forEach(function(el){
     el.style.resize='vertical';
   });
@@ -1782,7 +1806,7 @@ window.addEventListener('afterprint',function(){
 // ==========================================
 ['disease','eathabit','diet','overall'].forEach(function(k){buildMS('ms-'+k,k);});
 document.getElementById('assessDate').value=new Date().toISOString().split('T')[0];
-addReassessRow(); // 初始化預設一行複評
+addReassessRow();
 </script>
 </body>
 </html>
