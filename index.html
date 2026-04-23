@@ -73,13 +73,10 @@ tr:hover td{background:#fafaf8;}
 .rec-btn.outline:hover{background:#ddeeff;}
 .rec-btn.danger{background:#fff;border:1px solid #F09595;color:#A32D2D;}
 .rec-btn.danger:hover{background:#FCEBEB;}
-
-/* ── 月份篩選按鈕 ── */
 .month-filter-wrap{display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin-top:4px;}
 .mf-btn{padding:3px 10px;font-size:11px;border:1px solid #85B7EB;border-radius:12px;background:#fff;color:#185FA5;cursor:pointer;white-space:nowrap;transition:all .15s;}
 .mf-btn:hover{background:#ddeeff;}
 .mf-btn.active{background:#185FA5;color:#fff;border-color:#185FA5;}
-
 .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2000;}
 .overlay.show{display:flex;align-items:center;justify-content:center;}
 .modal{background:#fff;border-radius:12px;padding:1.5rem;width:650px;max-width:95vw;max-height:88vh;overflow-y:auto;}
@@ -114,7 +111,6 @@ tr:hover td{background:#fafaf8;}
 .reset-btn{background:#fff;color:#888;border:1px solid #ccc;border-radius:7px;padding:9px 18px;font-size:13px;cursor:pointer;margin-left:auto;}
 .reset-btn:hover{background:#f5f5f5;}
 .print-disease{display:none;}
-
 .dash-col { flex:1; border:1px solid #d0d0c8; border-radius:8px; padding:10px; background:#fff; display:flex; flex-direction:column;}
 .dash-col h4 { margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid #e0e0e0; font-size:14px; }
 .dash-item { padding:8px 10px; border-bottom:1px solid #f0f0ec; cursor:pointer; display:flex; justify-content:space-between; align-items:center; font-size:13px; }
@@ -138,28 +134,8 @@ tr:hover td{background:#fafaf8;}
   .field-row{gap:4px;margin-bottom:4px;}
   .field label{font-size:10px;margin-bottom:1px;}
   input,select{font-size:12px;padding:2px 4px;background:#fff;border:1px solid #aaa;}
-
-  /* ── 說明欄位列印自適應：自動撐開顯示全部內容 ── */
-  textarea{
-    font-size:12px;
-    padding:2px 4px;
-    background:#fff;
-    border:1px solid #aaa;
-  }
-  textarea#noteText{
-    height:auto !important;
-    min-height:0 !important;
-    max-height:none !important;
-    overflow:hidden !important;
-    resize:none !important;
-    white-space:pre-wrap !important;
-    word-break:break-word !important;
-    display:block;
-    box-sizing:border-box;
-    /* 列印時讓高度由內容撐開的關鍵 */
-    field-sizing: content;
-  }
-
+  textarea{font-size:12px;padding:2px 4px;background:#fff;border:1px solid #aaa;}
+  textarea#noteText{height:auto !important;min-height:0 !important;max-height:none !important;overflow:hidden !important;resize:none !important;white-space:pre-wrap !important;word-break:break-word !important;display:block;box-sizing:border-box;field-sizing: content;}
   .bmi-badge{font-size:12px;padding:2px 4px;min-height:22px;}
   table{font-size:12px;margin-bottom:2px;}
   th{font-size:12px;padding:3px 4px;}
@@ -178,6 +154,11 @@ tr:hover td{background:#fafaf8;}
   :-moz-placeholder { color: transparent !important; }
   ::-moz-placeholder { color: transparent !important; }
   :-ms-input-placeholder { color: transparent !important; }
+  
+  /* 新增的列印設定 */
+  .ra-ctrl-btn { display: none !important; }
+  body.hide-reassess #reassessSection { display: none !important; }
+  .reassess-row { page-break-inside: avoid; }
 }
 </style>
 </head>
@@ -380,6 +361,15 @@ tr:hover td{background:#fafaf8;}
   </div>
 </div>
 
+<div class="section" id="reassessSection">
+  <div class="section-title">六、複評紀錄 (半年例評 / 不定期追蹤)</div>
+  <div id="reassessContainer">
+    </div>
+  <div class="ra-ctrl-btn" style="text-align:center; margin-top:10px;">
+    <button class="add-btn" onclick="addReassessRow()">+ 新增一次評估紀錄</button>
+  </div>
+</div>
+
 <div class="btn-row" style="margin-top:1.5rem; padding-top:1rem; border-top:1px solid #e8e8e8; align-items:center;">
   <button class="save-btn" onclick="saveRecord()" style="font-size:14px; padding:10px 24px; background:#0C447C; box-shadow:0 4px 10px rgba(12,68,124,0.3);">💾 儲存至雲端</button>
   <button class="print-btn" onclick="openPrintModal()">🖨️ 批次列印 / 匯出 PDF</button>
@@ -395,6 +385,10 @@ tr:hover td{background:#fafaf8;}
       <span class="modal-close" onclick="closePrintModal()">×</span>
     </div>
     <div style="margin-bottom:15px;">
+      <label style="display:flex; align-items:center; gap:6px; margin-bottom:12px; font-weight:bold; color:#085041; cursor:pointer;">
+        <input type="checkbox" id="printReassessCb" checked style="width:16px; height:16px;">
+        列印時包含「六、複評紀錄」
+      </label>
       <button class="print-btn" onclick="doPrintSingle()" style="width:100%; background:#085041; margin-bottom:10px;">📄 僅列印當前畫面</button>
     </div>
     <div style="border-top:1px solid #e8e8e8; margin-top:15px; padding-top:15px;">
@@ -642,9 +636,6 @@ function currentOrgName() {
 // ☁️ 雲端個案存取 + 月份篩選
 // ==========================================
 
-/**
- * 從雲端載入個案清單，並產生月份篩選按鈕
- */
 function renderRecordSelect() {
   var sel = document.getElementById('recordSelect');
   var cur = sel.value;
@@ -657,7 +648,6 @@ function renderRecordSelect() {
     return;
   }
 
-  // 逾時保護：超過 10 秒仍未回應則提示
   var timeoutId = setTimeout(function() {
     if (sel.innerHTML.includes('讀取雲端資料中')) {
       sel.innerHTML = '<option value="">── 連線逾時，請重新整理 ──</option>';
@@ -671,7 +661,6 @@ function renderRecordSelect() {
     if (!snap.empty) {
       snap.forEach(doc => { allCurrentOrgRecords.push(doc.data()); });
     }
-    // 重置月份篩選（切換機構時回到全部）
     activeMonthFilter = 'ALL';
     buildMonthFilterBtns(allCurrentOrgRecords);
     applyMonthFilter(cur);
@@ -686,15 +675,11 @@ function renderRecordSelect() {
   });
 }
 
-/**
- * 產生月份篩選按鈕（全部 + 各年月）
- */
 function buildMonthFilterBtns(records) {
   var wrap = document.getElementById('monthFilterWrap');
   var btnContainer = document.getElementById('monthFilterBtns');
   btnContainer.innerHTML = '';
 
-  // 收集所有出現的「YYYY-MM」
   var monthSet = new Set();
   records.forEach(function(r) {
     if (r.data && r.data.assessDate && r.data.assessDate.length >= 7) {
@@ -702,7 +687,6 @@ function buildMonthFilterBtns(records) {
     }
   });
 
-  // 若只有一個月份（或無資料），不需要顯示篩選列
   if (monthSet.size <= 1) {
     wrap.style.display = 'none';
     return;
@@ -710,7 +694,6 @@ function buildMonthFilterBtns(records) {
 
   wrap.style.display = 'flex';
 
-  // 全部按鈕
   var allBtn = document.createElement('button');
   allBtn.className = 'mf-btn' + (activeMonthFilter === 'ALL' ? ' active' : '');
   allBtn.dataset.mf = 'ALL';
@@ -718,7 +701,6 @@ function buildMonthFilterBtns(records) {
   allBtn.onclick = function() { setMonthFilter('ALL'); };
   btnContainer.appendChild(allBtn);
 
-  // 各月份按鈕（最新在前）
   var months = Array.from(monthSet).sort().reverse();
   months.forEach(function(ym) {
     var parts = ym.split('-');
@@ -736,22 +718,14 @@ function hideMonthFilter() {
   document.getElementById('monthFilterWrap').style.display = 'none';
 }
 
-/**
- * 點選月份按鈕後，更新樣式並篩選下拉清單
- */
 function setMonthFilter(ym) {
   activeMonthFilter = ym;
-  // 更新按鈕樣式
   document.querySelectorAll('#monthFilterBtns .mf-btn').forEach(function(b) {
     b.classList.toggle('active', b.dataset.mf === ym);
   });
   applyMonthFilter('');
 }
 
-/**
- * 依 activeMonthFilter 篩選 recordSelect 的選項
- * @param {string} restoreKey - 篩選後嘗試保留選取的 key
- */
 function applyMonthFilter(restoreKey) {
   var sel = document.getElementById('recordSelect');
   sel.innerHTML = '<option value="">── 選擇雲端儲存個案 ──</option>';
@@ -847,6 +821,46 @@ function clearFormKeepIdentity(){
   checkCheekPuff(); checkTongueFlex(); checkEat10Remark(); checkChewRemark(); checkTeethRemark();
   ['disease','eathabit','diet','overall'].forEach(function(key){msState[key].clear();buildMS('ms-'+key,key);updatePrintText(key);});
   document.getElementById('recordSelect').value = '';
+  
+  // 清空複評並預設給一行
+  document.getElementById('reassessContainer').innerHTML = '';
+  addReassessRow();
+}
+
+// ==========================================
+// 複評紀錄動態欄位
+// ==========================================
+function addReassessRow(data) {
+  var container = document.getElementById('reassessContainer');
+  var row = document.createElement('div');
+  row.className = 'reassess-row field-row';
+  row.style.cssText = 'background:#fafaf8; padding:10px; border:1px solid #e0e0d8; border-radius:5px; margin-bottom:8px; align-items:flex-end; position:relative;';
+
+  row.innerHTML = `
+    <div class="field"><label>追蹤日期</label><input type="date" class="ra-date"></div>
+    <div class="field"><label>計畫調整</label>
+      <select class="ra-status">
+        <option value="">請選擇</option>
+        <option value="維持原飲食計畫">維持原飲食計畫</option>
+        <option value="更改飲食計畫">更改飲食計畫</option>
+      </select>
+    </div>
+    <div class="field" style="flex:2;"><label>評估說明</label><input type="text" class="ra-note" placeholder="請輸入說明..."></div>
+    <div class="field"><label>簽名</label><input type="text" class="ra-sign" placeholder="評估人員"></div>
+    <button class="del-btn ra-ctrl-btn" style="position:absolute; top:5px; right:5px; padding:2px 6px; font-size:10px;" onclick="removeReassessRow(this)">✕</button>
+  `;
+  container.appendChild(row);
+
+  if (data) {
+    row.querySelector('.ra-date').value = data.date || '';
+    row.querySelector('.ra-status').value = data.status || '';
+    row.querySelector('.ra-note').value = data.note || '';
+    row.querySelector('.ra-sign').value = data.sign || '';
+  }
+}
+
+function removeReassessRow(btn) {
+  btn.parentElement.remove();
 }
 
 function collectFormData() {
@@ -862,6 +876,17 @@ function collectFormData() {
     msSelected[k] = Array.from(msState[k]);
     msOpts[k] = msOptions[k].slice();
   });
+  
+  var reassessments = [];
+  document.querySelectorAll('.reassess-row').forEach(function(row) {
+    reassessments.push({
+      date: row.querySelector('.ra-date').value,
+      status: row.querySelector('.ra-status').value,
+      note: row.querySelector('.ra-note').value,
+      sign: row.querySelector('.ra-sign').value
+    });
+  });
+
   return {
     org:              document.getElementById('orgSelect').value,
     name:             document.getElementById('nameSelect').value,
@@ -892,7 +917,8 @@ function collectFormData() {
     signature:        document.getElementById('signature').value,
     assessDate:       document.getElementById('assessDate').value,
     msSelected:       msSelected,
-    msOpts:           msOpts
+    msOpts:           msOpts,
+    reassessments:    reassessments
   };
 }
 
@@ -957,7 +983,12 @@ function selectAllPrint(check) {
 
 function doPrintSingle() {
   updateAllPrintText();
+  var printCb = document.getElementById('printReassessCb');
+  document.body.classList.toggle('hide-reassess', !printCb.checked);
+  
   window.print();
+  
+  document.body.classList.remove('hide-reassess');
 }
 
 function doBatchPrint() {
@@ -977,6 +1008,9 @@ function doBatchPrint() {
     var backupData = collectFormData();
     var backupOrg = document.getElementById('orgSelect').value;
     var backupRec = document.getElementById('recordSelect').value;
+
+    var printCb = document.getElementById('printReassessCb');
+    document.body.classList.toggle('hide-reassess', !printCb.checked);
 
     var printArea = document.createElement('div');
     printArea.id = 'batchPrintArea';
@@ -1013,6 +1047,7 @@ function doBatchPrint() {
 
     setTimeout(function() {
       window.print();
+      document.body.classList.remove('hide-reassess');
       printArea.remove();
       document.getElementById('mainFormWrap').style.display = 'block';
       resetForm(false);
@@ -1104,13 +1139,10 @@ function doCloseCase() {
 
   if (!confirm('確定將「' + name + '」結案？\n結案後此長輩將從名單移除，但所有評估紀錄保留在雲端。')) return;
 
-  // 從現役名單移除
   if (members[orgId]) {
     members[orgId] = members[orgId].filter(function(n) { return n !== name; });
   }
-  // 加入結案名單
   if (!closedMembers[orgId]) closedMembers[orgId] = [];
-  // 避免重複
   closedMembers[orgId] = closedMembers[orgId].filter(function(c) { return c.name !== name; });
   closedMembers[orgId].push({ name: name, closedDate: closeDate, reason: reason, orgName: currentOrgName() });
 
@@ -1122,7 +1154,6 @@ function doCloseCase() {
 }
 
 function openClosedArchive() {
-  // 填入機構篩選器
   var sel = document.getElementById('closedOrgFilter');
   sel.innerHTML = '<option value="">所有機構</option>';
   orgs.forEach(function(o) {
@@ -1138,7 +1169,6 @@ function renderClosedArchive() {
   var list = document.getElementById('closedArchiveList');
   list.innerHTML = '';
 
-  // 收集所有結案個案
   var all = [];
   Object.keys(closedMembers).forEach(function(orgId) {
     if (filterOrg && orgId !== filterOrg) return;
@@ -1147,10 +1177,7 @@ function renderClosedArchive() {
     });
   });
 
-  // 關鍵字篩選
   if (keyword) all = all.filter(function(c) { return c.name.toLowerCase().includes(keyword); });
-
-  // 依結案日期排序（新→舊）
   all.sort(function(a, b) { return (b.closedDate || '').localeCompare(a.closedDate || ''); });
 
   if (all.length === 0) {
@@ -1173,11 +1200,9 @@ function renderClosedArchive() {
 }
 
 function browseClosedRecords(orgId, name) {
-  // 切換機構、選人、篩選紀錄
   document.getElementById('closedArchiveOverlay').classList.remove('show');
   document.getElementById('orgSelect').value = orgId;
 
-  // 手動建立姓名選單（含結案個案）
   var sel = document.getElementById('nameSelect');
   sel.innerHTML = '<option value="">── 請選擇姓名 ──</option>';
   var allInOrg = (members[orgId] || []).concat((closedMembers[orgId] || []).map(function(c){ return c.name; }));
@@ -1190,12 +1215,10 @@ function browseClosedRecords(orgId, name) {
   var found = orgs.find(function(o){ return o.id===orgId; });
   if (lbl && found) lbl.textContent = '目前機構：' + found.name + '（含結案）';
 
-  // 載入該機構所有雲端紀錄，然後篩選
   db.collection("records").where("orgId", "==", orgId).get().then(function(snap) {
     allCurrentOrgRecords = [];
     snap.forEach(function(doc) { allCurrentOrgRecords.push(doc.data()); });
 
-    // 只顯示此人的紀錄
     var personRecords = allCurrentOrgRecords.filter(function(r) { return r.data && r.data.name === name; });
     var recSel = document.getElementById('recordSelect');
     recSel.innerHTML = '<option value="">── 選擇雲端儲存個案 ──</option>';
@@ -1224,7 +1247,6 @@ function reinstateCase(orgId, name) {
   alert('✅ 「' + name + '」已復歸至現役名單。');
 }
 
-
 function openDashboard() {
   var orgId = currentOrgId();
   if(!orgId || orgId === '__none__') { alert("請先在左上角選擇機構，才能查看進度總覽。"); return; }
@@ -1249,7 +1271,6 @@ function renderDashboard() {
   var year = document.getElementById('filterYear').value;
   var period = document.getElementById('filterPeriod').value;
   var orgMembers = members[currentOrgId()] || [];
-  // 結案個案不出現在「尚未評估」清單，但若有紀錄仍顯示於「已評估」
   var closedNames = new Set((closedMembers[currentOrgId()] || []).map(function(c){ return c.name; }));
   var filteredRecords = allCurrentOrgRecords.filter(function(r) {
     if(!r.data || !r.data.assessDate) return false;
@@ -1304,7 +1325,7 @@ function renderOrgSelect() {
   });
   if (cur && orgs.find(function(o){ return o.id === cur; })) {
     sel.value = cur;
-    onOrgChange(); // ← 修正：機構已選取時也要觸發
+    onOrgChange(); 
   } else if (orgs.length > 0) {
     sel.value = orgs[0].id;
     onOrgChange(); 
@@ -1390,7 +1411,6 @@ function renderMemberList() {
     row.innerHTML = '<input type="text" value="' + m + '" onchange="members[mgrActiveOrg][' + i + ']=this.value"><button class="del-btn" onclick="delMember(' + i + ')">刪除</button>';
     d.appendChild(row);
   });
-  // 顯示結案個案（灰色、可復歸）
   var closed = closedMembers[mgrActiveOrg] || [];
   if (closed.length > 0) {
     var sep = document.createElement('div');
@@ -1695,6 +1715,14 @@ function applyFormDataSync(d, isBatchPrint){
       updateMSTrigger(k);renderTags(k);updatePrintText(k);
     }
   });
+
+  // 載入複評紀錄
+  document.getElementById('reassessContainer').innerHTML = '';
+  if (d.reassessments && d.reassessments.length > 0) {
+    d.reassessments.forEach(function(r) { addReassessRow(r); });
+  } else {
+    addReassessRow(); 
+  }
 }
 
 // ==========================================
@@ -1704,7 +1732,6 @@ function autoGrowTextarea(el){
   el.style.height='auto';
   el.style.height=el.scrollHeight+'px';
 }
-// 列印前強制撐開所有 textarea
 window.addEventListener('beforeprint',function(){
   document.querySelectorAll('textarea').forEach(function(el){
     el.style.height='auto';
@@ -1712,7 +1739,6 @@ window.addEventListener('beforeprint',function(){
   });
 });
 window.addEventListener('afterprint',function(){
-  // 列印後恢復 resize 功能
   var nt=document.getElementById('noteText');
   if(nt){nt.style.resize='vertical';}
 });
@@ -1722,6 +1748,7 @@ window.addEventListener('afterprint',function(){
 // ==========================================
 ['disease','eathabit','diet','overall'].forEach(function(k){buildMS('ms-'+k,k);});
 document.getElementById('assessDate').value=new Date().toISOString().split('T')[0];
+addReassessRow(); // 初始化預設一行複評
 </script>
 </body>
 </html>
