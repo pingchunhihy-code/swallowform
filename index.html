@@ -139,22 +139,20 @@ tr:hover td{background:#fafaf8;}
   .field label{font-size:10px;margin-bottom:1px;}
   input,select{font-size:12px;padding:2px 4px;background:#fff;border:1px solid #aaa;}
   
-  /* 解決文字高度無法自動展開：全面套用於所有 textarea */
+  /* 修正：移除 height: auto !important，改為讓 JS 的計算高度生效，並設定 hidden 避免滾動條影響寬度 */
   textarea {
     font-size: 12px;
     padding: 2px 4px;
     background: #fff;
     border: 1px solid #aaa;
-    height: auto !important;
     min-height: 0 !important;
     max-height: none !important;
-    overflow: visible !important;
+    overflow: hidden !important; 
     resize: none !important;
     white-space: pre-wrap !important;
     word-break: break-all !important;
     display: block;
     box-sizing: border-box;
-    field-sizing: content;
   }
   
   .bmi-badge{font-size:12px;padding:2px 4px;min-height:22px;}
@@ -858,7 +856,6 @@ function addReassessRow(data) {
   row.className = 'reassess-row field-row';
   row.style.cssText = 'background:#fafaf8; padding:10px; border:1px solid #e0e0d8; border-radius:5px; margin-bottom:8px; align-items:flex-end; position:relative;';
 
-  // 注意：這裡將 class="ra-note" 從 <input> 改為 <textarea>，讓它列印時能展開換行
   row.innerHTML = `
     <div class="field"><label>追蹤日期</label><input type="date" class="ra-date"></div>
     <div class="field"><label>計畫調整</label>
@@ -881,7 +878,6 @@ function addReassessRow(data) {
     row.querySelector('.ra-status').value = data.status || '';
     row.querySelector('.ra-note').value = data.note || '';
     row.querySelector('.ra-sign').value = data.sign || '';
-    // 匯入資料後，也自動調整一下高度
     autoGrowTextarea(row.querySelector('.ra-note'));
   }
 }
@@ -1070,15 +1066,16 @@ function doBatchPrint() {
           if(inp.type === 'checkbox' || inp.type === 'radio') cInp[idx].checked = inp.checked;
           else {
             cInp[idx].value = inp.value;
-            // 複製的 textarea 也必須強制呼叫 autoGrow 以確保列印展開
-            if (inp.tagName.toLowerCase() === 'textarea') {
-              autoGrowTextarea(cInp[idx]);
-            }
           }
         });
 
         clone.querySelectorAll('.btn-row, .records-bar, .form-header button, .overlay').forEach(function(b) { b.remove(); });
         printArea.appendChild(clone);
+        
+        // 【關鍵修復】：等待 DOM 附加到畫面後，再對 clone 裡面的 textarea 計算高度！
+        clone.querySelectorAll('textarea').forEach(function(ta) {
+          autoGrowTextarea(ta);
+        });
       }
     }
 
@@ -1767,7 +1764,7 @@ function applyFormDataSync(d, isBatchPrint){
 // ==========================================
 function autoGrowTextarea(el){
   el.style.height = '1px'; // 先重置高度強迫重新計算 (避免被限制住)
-  el.style.height = el.scrollHeight + 'px';
+  el.style.height = (el.scrollHeight + 2) + 'px'; // +2px 避免邊框遮切
 }
 window.addEventListener('beforeprint',function(){
   document.querySelectorAll('textarea').forEach(function(el){
