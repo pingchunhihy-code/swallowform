@@ -124,6 +124,10 @@ tr:hover td{background:#fafaf8;}
 @media print{
   @page{size:A4;margin:8mm 10mm;}
   body{background:#fff;padding:0;font-size:12px;line-height:1.35;}
+  
+  /* 解決 PDF T3Font_7 報錯：強制指定字體 */
+  * { font-family: "Microsoft JhengHei", "PingFang TC", sans-serif !important; }
+  
   .form-wrap{box-shadow:none;padding:0;border-radius:0;max-width:100%;}
   .form-header{padding-bottom:2px;margin-bottom:4px;}
   .form-header .sub-title{font-size:12px;margin-top:0;}
@@ -134,8 +138,25 @@ tr:hover td{background:#fafaf8;}
   .field-row{gap:4px;margin-bottom:4px;}
   .field label{font-size:10px;margin-bottom:1px;}
   input,select{font-size:12px;padding:2px 4px;background:#fff;border:1px solid #aaa;}
-  textarea{font-size:12px;padding:2px 4px;background:#fff;border:1px solid #aaa;}
-  textarea#noteText{height:auto !important;min-height:0 !important;max-height:none !important;overflow:hidden !important;resize:none !important;white-space:pre-wrap !important;word-break:break-word !important;display:block;box-sizing:border-box;field-sizing: content;}
+  
+  /* 解決文字高度無法自動展開：全面套用於所有 textarea */
+  textarea {
+    font-size: 12px;
+    padding: 2px 4px;
+    background: #fff;
+    border: 1px solid #aaa;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+    resize: none !important;
+    white-space: pre-wrap !important;
+    word-break: break-all !important;
+    display: block;
+    box-sizing: border-box;
+    field-sizing: content;
+  }
+  
   .bmi-badge{font-size:12px;padding:2px 4px;min-height:22px;}
   table{font-size:12px;margin-bottom:2px;}
   th{font-size:12px;padding:3px 4px;}
@@ -150,10 +171,12 @@ tr:hover td{background:#fafaf8;}
   #batchPrintArea { display:block!important; width:100%; }
   #batchPrintArea .form-wrap { display:block!important; page-break-after: always; margin-bottom:0; box-shadow:none; }
   #batchPrintArea .form-wrap:last-child { page-break-after: auto; }
-  ::-webkit-input-placeholder { color: transparent !important; }
-  :-moz-placeholder { color: transparent !important; }
-  ::-moz-placeholder { color: transparent !important; }
-  :-ms-input-placeholder { color: transparent !important; }
+  
+  /* 解決 PDF T3Font_7 報錯：將 transparent 改為 hidden 避免 Adobe 誤判渲染 */
+  ::-webkit-input-placeholder { visibility: hidden !important; }
+  :-moz-placeholder { visibility: hidden !important; }
+  ::-moz-placeholder { visibility: hidden !important; }
+  :-ms-input-placeholder { visibility: hidden !important; }
   
   /* 新增的列印設定 */
   .ra-ctrl-btn { display: none !important; }
@@ -574,10 +597,10 @@ document.addEventListener("DOMContentLoaded", function() {
 // ==========================================
 var orgs = [];
 var members = {};
-var closedMembers = {}; // { orgId: [ { name, closedDate, reason } ] }
+var closedMembers = {}; 
 var mgrActiveOrg = null;
 var allCurrentOrgRecords = [];
-var activeMonthFilter = 'ALL'; // ← 目前選取的月份篩選
+var activeMonthFilter = 'ALL'; 
 
 function loadCloudSettings() {
   db.collection("system").doc("settings").get().then(doc => {
@@ -822,7 +845,6 @@ function clearFormKeepIdentity(){
   ['disease','eathabit','diet','overall'].forEach(function(key){msState[key].clear();buildMS('ms-'+key,key);updatePrintText(key);});
   document.getElementById('recordSelect').value = '';
   
-  // 清空複評並預設給一行
   document.getElementById('reassessContainer').innerHTML = '';
   addReassessRow();
 }
@@ -836,6 +858,7 @@ function addReassessRow(data) {
   row.className = 'reassess-row field-row';
   row.style.cssText = 'background:#fafaf8; padding:10px; border:1px solid #e0e0d8; border-radius:5px; margin-bottom:8px; align-items:flex-end; position:relative;';
 
+  // 注意：這裡將 class="ra-note" 從 <input> 改為 <textarea>，讓它列印時能展開換行
   row.innerHTML = `
     <div class="field"><label>追蹤日期</label><input type="date" class="ra-date"></div>
     <div class="field"><label>計畫調整</label>
@@ -845,7 +868,9 @@ function addReassessRow(data) {
         <option value="更改飲食計畫">更改飲食計畫</option>
       </select>
     </div>
-    <div class="field" style="flex:2;"><label>評估說明</label><input type="text" class="ra-note" placeholder="請輸入說明..."></div>
+    <div class="field" style="flex:2;"><label>評估說明</label>
+      <textarea class="ra-note" rows="1" placeholder="請輸入說明..." oninput="autoGrowTextarea(this)" style="resize:vertical; overflow:hidden; width:100%;"></textarea>
+    </div>
     <div class="field"><label>簽名</label><input type="text" class="ra-sign" placeholder="評估人員"></div>
     <button class="del-btn ra-ctrl-btn" style="position:absolute; top:5px; right:5px; padding:2px 6px; font-size:10px;" onclick="removeReassessRow(this)">✕</button>
   `;
@@ -856,6 +881,8 @@ function addReassessRow(data) {
     row.querySelector('.ra-status').value = data.status || '';
     row.querySelector('.ra-note').value = data.note || '';
     row.querySelector('.ra-sign').value = data.sign || '';
+    // 匯入資料後，也自動調整一下高度
+    autoGrowTextarea(row.querySelector('.ra-note'));
   }
 }
 
@@ -983,6 +1010,10 @@ function selectAllPrint(check) {
 
 function doPrintSingle() {
   updateAllPrintText();
+  
+  // 列印前強制所有 textarea 重新計算高度以防被截斷
+  document.querySelectorAll('textarea').forEach(function(el){ autoGrowTextarea(el); });
+
   var printCb = document.getElementById('printReassessCb');
   document.body.classList.toggle('hide-reassess', !printCb.checked);
   
@@ -1037,7 +1068,13 @@ function doBatchPrint() {
         var cInp = clone.querySelectorAll('input, textarea');
         oInp.forEach(function(inp, idx) {
           if(inp.type === 'checkbox' || inp.type === 'radio') cInp[idx].checked = inp.checked;
-          else cInp[idx].value = inp.value;
+          else {
+            cInp[idx].value = inp.value;
+            // 複製的 textarea 也必須強制呼叫 autoGrow 以確保列印展開
+            if (inp.tagName.toLowerCase() === 'textarea') {
+              autoGrowTextarea(cInp[idx]);
+            }
+          }
         });
 
         clone.querySelectorAll('.btn-row, .records-bar, .form-header button, .overlay').forEach(function(b) { b.remove(); });
@@ -1729,18 +1766,18 @@ function applyFormDataSync(d, isBatchPrint){
 // 說明欄自動撐高（螢幕 & 列印）
 // ==========================================
 function autoGrowTextarea(el){
-  el.style.height='auto';
-  el.style.height=el.scrollHeight+'px';
+  el.style.height = '1px'; // 先重置高度強迫重新計算 (避免被限制住)
+  el.style.height = el.scrollHeight + 'px';
 }
 window.addEventListener('beforeprint',function(){
   document.querySelectorAll('textarea').forEach(function(el){
-    el.style.height='auto';
-    el.style.height=el.scrollHeight+'px';
+    autoGrowTextarea(el);
   });
 });
 window.addEventListener('afterprint',function(){
-  var nt=document.getElementById('noteText');
-  if(nt){nt.style.resize='vertical';}
+  document.querySelectorAll('textarea').forEach(function(el){
+    el.style.resize='vertical';
+  });
 });
 
 // ==========================================
