@@ -73,6 +73,13 @@ tr:hover td{background:#fafaf8;}
 .rec-btn.outline:hover{background:#ddeeff;}
 .rec-btn.danger{background:#fff;border:1px solid #F09595;color:#A32D2D;}
 .rec-btn.danger:hover{background:#FCEBEB;}
+
+/* ── 月份篩選按鈕 ── */
+.month-filter-wrap{display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin-top:4px;}
+.mf-btn{padding:3px 10px;font-size:11px;border:1px solid #85B7EB;border-radius:12px;background:#fff;color:#185FA5;cursor:pointer;white-space:nowrap;transition:all .15s;}
+.mf-btn:hover{background:#ddeeff;}
+.mf-btn.active{background:#185FA5;color:#fff;border-color:#185FA5;}
+
 .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2000;}
 .overlay.show{display:flex;align-items:center;justify-content:center;}
 .modal{background:#fff;border-radius:12px;padding:1.5rem;width:650px;max-width:95vw;max-height:88vh;overflow-y:auto;}
@@ -119,18 +126,39 @@ tr:hover td{background:#fafaf8;}
 .dash-action-btn:hover { border-color:#185FA5; color:#185FA5; background:#E6F1FB; }
 
 @media print{
-  @page{size:A4;margin:8mm 10mm;} 
-  body{background:#fff;padding:0;font-size:12px;line-height:1.35;} 
+  @page{size:A4;margin:8mm 10mm;}
+  body{background:#fff;padding:0;font-size:12px;line-height:1.35;}
   .form-wrap{box-shadow:none;padding:0;border-radius:0;max-width:100%;}
   .form-header{padding-bottom:2px;margin-bottom:4px;}
   .form-header .sub-title{font-size:12px;margin-top:0;}
   .org-select{font-size:15px;border-bottom:1px solid #666;padding:0;}
   .mgr-btn,.btn-row,.overlay,.records-bar{display:none!important;}
-  .section{padding:.3rem .5rem;margin-bottom:.3rem;border:1px solid #aaa;border-radius:3px;page-break-inside:avoid;} 
+  .section{padding:.3rem .5rem;margin-bottom:.3rem;border:1px solid #aaa;border-radius:3px;page-break-inside:avoid;}
   .section-title{font-size:13px;margin-bottom:4px;padding:3px 6px;background:#eee;border-left:3px solid #666;}
-  .field-row{gap:4px;margin-bottom:4px;} 
+  .field-row{gap:4px;margin-bottom:4px;}
   .field label{font-size:10px;margin-bottom:1px;}
-  input,select,textarea{font-size:12px;padding:2px 4px;background:#fff;border:1px solid #aaa;}
+  input,select{font-size:12px;padding:2px 4px;background:#fff;border:1px solid #aaa;}
+
+  /* ── 說明欄位列印自適應：自動撐開顯示全部內容 ── */
+  textarea{
+    font-size:12px;
+    padding:2px 4px;
+    background:#fff;
+    border:1px solid #aaa;
+  }
+  textarea#noteText{
+    height:auto !important;
+    min-height:0 !important;
+    max-height:none !important;
+    overflow:visible !important;
+    resize:none !important;
+    white-space:pre-wrap !important;
+    word-break:break-all !important;
+    /* 讓瀏覽器依內容自動計算高度 */
+    display:block;
+    box-sizing:border-box;
+  }
+
   .bmi-badge{font-size:12px;padding:2px 4px;min-height:22px;}
   table{font-size:12px;margin-bottom:2px;}
   th{font-size:12px;padding:3px 4px;}
@@ -175,6 +203,11 @@ tr:hover td{background:#fafaf8;}
     <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
       <select id="recordSelect" onchange="loadRecord()" style="flex:1;min-width:180px;max-width:360px;font-size:13px;"><option value="">── 選擇雲端儲存個案 ──</option></select>
       <button class="rec-btn danger" onclick="deleteRecord()">✕ 永久刪除</button>
+    </div>
+    <!-- ══ 月份篩選按鈕列 ══ -->
+    <div id="monthFilterWrap" class="month-filter-wrap" style="display:none;">
+      <span style="font-size:11px;color:#555;white-space:nowrap;">📅 篩選月份：</span>
+      <div id="monthFilterBtns" style="display:flex;gap:4px;flex-wrap:wrap;"></div>
     </div>
   </div>
 </div>
@@ -480,9 +513,6 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-// ==========================================
-// 網頁載入後直接啟動，跳過身分驗證
-// ==========================================
 document.addEventListener("DOMContentLoaded", function() {
   loadCloudSettings();
 });
@@ -494,6 +524,7 @@ var orgs = [];
 var members = {};
 var mgrActiveOrg = null;
 var allCurrentOrgRecords = [];
+var activeMonthFilter = 'ALL'; // ← 目前選取的月份篩選
 
 function loadCloudSettings() {
   db.collection("system").doc("settings").get().then(doc => {
@@ -519,7 +550,7 @@ function loadCloudSettings() {
   }).catch(e => {
     console.error("載入設定失敗", e);
     if(e.message.includes('Missing or insufficient permissions')) {
-        alert("⚠️ 雲端設定載入失敗：資料庫權限不足！\n請務必前往 Firebase 控制台將 Firestore Rules 修改為 allow read, write: if true; 才能免登入存取。");
+        alert("⚠️ 雲端設定載入失敗：資料庫權限不足！");
     } else {
         alert("載入失敗 (" + e.message + ")");
     }
@@ -545,40 +576,135 @@ function currentOrgName() {
 }
 
 // ==========================================
-// 雲端個案存取
+// ☁️ 雲端個案存取 + 月份篩選
 // ==========================================
+
+/**
+ * 從雲端載入個案清單，並產生月份篩選按鈕
+ */
 function renderRecordSelect() {
   var sel = document.getElementById('recordSelect');
   var cur = sel.value;
   sel.innerHTML = '<option value="">── 讀取雲端資料中... ──</option>';
+
   var orgId = currentOrgId();
   if (!orgId || orgId === '__none__') {
     sel.innerHTML = '<option value="">── 選擇雲端儲存個案 ──</option>';
+    hideMonthFilter();
     return;
   }
+
   db.collection("records").where("orgId", "==", orgId).get().then(snap => {
-    sel.innerHTML = '<option value="">── 選擇雲端儲存個案 ──</option>';
     allCurrentOrgRecords = [];
-    if (snap.empty) {
-      var opt = document.createElement('option'); opt.disabled = true; opt.textContent = '（此機構尚無儲存個案）'; sel.appendChild(opt);
-    } else {
-      var keys = [];
-      snap.forEach(doc => { 
-        allCurrentOrgRecords.push(doc.data());
-        keys.push(doc.data().recordKey); 
-      });
-      keys.sort().reverse().forEach(k => {
-        var opt = document.createElement('option'); opt.value = k; opt.textContent = k; sel.appendChild(opt);
-      });
-      if (cur) sel.value = cur;
+    if (!snap.empty) {
+      snap.forEach(doc => { allCurrentOrgRecords.push(doc.data()); });
     }
+    // 重置月份篩選（切換機構時回到全部）
+    activeMonthFilter = 'ALL';
+    buildMonthFilterBtns(allCurrentOrgRecords);
+    applyMonthFilter(cur);
   }).catch(e => {
     console.error("讀取個案列表失敗", e);
     sel.innerHTML = '<option value="">── 讀取失敗 ──</option>';
     if(e.message.includes('Missing or insufficient permissions')) {
-        alert("⚠️ 讀取雲端清單失敗：資料庫權限不足！\n請至 Firebase 將安全規則改為 allow read, write: if true;");
+        alert("⚠️ 讀取雲端清單失敗：資料庫權限不足！");
+    }
+    hideMonthFilter();
+  });
+}
+
+/**
+ * 產生月份篩選按鈕（全部 + 各年月）
+ */
+function buildMonthFilterBtns(records) {
+  var wrap = document.getElementById('monthFilterWrap');
+  var btnContainer = document.getElementById('monthFilterBtns');
+  btnContainer.innerHTML = '';
+
+  // 收集所有出現的「YYYY-MM」
+  var monthSet = new Set();
+  records.forEach(function(r) {
+    if (r.data && r.data.assessDate && r.data.assessDate.length >= 7) {
+      monthSet.add(r.data.assessDate.substring(0, 7));
     }
   });
+
+  // 若只有一個月份（或無資料），不需要顯示篩選列
+  if (monthSet.size <= 1) {
+    wrap.style.display = 'none';
+    return;
+  }
+
+  wrap.style.display = 'flex';
+
+  // 全部按鈕
+  var allBtn = document.createElement('button');
+  allBtn.className = 'mf-btn' + (activeMonthFilter === 'ALL' ? ' active' : '');
+  allBtn.dataset.mf = 'ALL';
+  allBtn.textContent = '全部';
+  allBtn.onclick = function() { setMonthFilter('ALL'); };
+  btnContainer.appendChild(allBtn);
+
+  // 各月份按鈕（最新在前）
+  var months = Array.from(monthSet).sort().reverse();
+  months.forEach(function(ym) {
+    var parts = ym.split('-');
+    var label = parts[0] + '年' + parseInt(parts[1]) + '月';
+    var btn = document.createElement('button');
+    btn.className = 'mf-btn' + (activeMonthFilter === ym ? ' active' : '');
+    btn.dataset.mf = ym;
+    btn.textContent = label;
+    btn.onclick = (function(m) { return function() { setMonthFilter(m); }; })(ym);
+    btnContainer.appendChild(btn);
+  });
+}
+
+function hideMonthFilter() {
+  document.getElementById('monthFilterWrap').style.display = 'none';
+}
+
+/**
+ * 點選月份按鈕後，更新樣式並篩選下拉清單
+ */
+function setMonthFilter(ym) {
+  activeMonthFilter = ym;
+  // 更新按鈕樣式
+  document.querySelectorAll('#monthFilterBtns .mf-btn').forEach(function(b) {
+    b.classList.toggle('active', b.dataset.mf === ym);
+  });
+  applyMonthFilter('');
+}
+
+/**
+ * 依 activeMonthFilter 篩選 recordSelect 的選項
+ * @param {string} restoreKey - 篩選後嘗試保留選取的 key
+ */
+function applyMonthFilter(restoreKey) {
+  var sel = document.getElementById('recordSelect');
+  sel.innerHTML = '<option value="">── 選擇雲端儲存個案 ──</option>';
+
+  var filtered = allCurrentOrgRecords.filter(function(r) {
+    if (activeMonthFilter === 'ALL') return true;
+    if (!r.data || !r.data.assessDate) return false;
+    return r.data.assessDate.substring(0, 7) === activeMonthFilter;
+  });
+
+  if (filtered.length === 0) {
+    var opt = document.createElement('option');
+    opt.disabled = true;
+    opt.textContent = '（此月份無資料）';
+    sel.appendChild(opt);
+  } else {
+    var keys = filtered.map(function(r) { return r.recordKey; });
+    keys.sort().reverse();
+    keys.forEach(function(k) {
+      var opt = document.createElement('option');
+      opt.value = k;
+      opt.textContent = k;
+      sel.appendChild(opt);
+    });
+    if (restoreKey) sel.value = restoreKey;
+  }
 }
 
 function saveRecord() {
@@ -703,7 +829,6 @@ function resetForm(shouldRefreshRecords) {
   }
 }
 
-// 匯出 JSON 備份功能
 function exportJSON() {
   if(allCurrentOrgRecords.length === 0) {
       alert("目前機構無資料可匯出備份。");
@@ -956,8 +1081,6 @@ function renderOrgSelect() {
   orgs.forEach(function(o) {
     var opt = document.createElement('option'); opt.value = o.id; opt.textContent = o.name; sel.appendChild(opt);
   });
-  
-  // 自動選擇機構，並立即觸發雲端讀取事件
   if (cur && orgs.find(function(o){ return o.id === cur; })) {
     sel.value = cur;
   } else if (orgs.length > 0) {
@@ -973,6 +1096,7 @@ function onOrgChange() {
   if (!orgId) {
     var lbl = document.getElementById('recOrgLabel'); if (lbl) lbl.textContent = '請先選擇機構';
     document.getElementById('recordSelect').innerHTML = '<option value="">── 選擇雲端儲存個案 ──</option>';
+    hideMonthFilter();
     return;
   }
   (members[orgId] || []).forEach(function(n) {
@@ -1266,7 +1390,7 @@ document.addEventListener('click',function(e){
 });
 
 // ==========================================
-// 表單資料載入 (修復相容性問題)
+// 表單資料載入
 // ==========================================
 function applyFormDataSync(d, isBatchPrint){
   var _isBatchPrint = typeof isBatchPrint !== 'undefined' ? isBatchPrint : false;
