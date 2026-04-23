@@ -462,6 +462,8 @@ tr:hover td{background:#fafaf8;}
     <div id="closedArchiveList" style="max-height:420px; overflow-y:auto; border:1px solid #e0e0d8; border-radius:8px;"></div>
   </div>
 </div>
+
+<div class="overlay" id="mgrOverlay" onclick="overlayClick(event, 'mgrOverlay')">
   <div class="modal">
     <div class="modal-title">
       <span>⚙ 管理機構與人員 (將同步至雲端)</span>
@@ -598,10 +600,12 @@ function loadCloudSettings() {
     renderOrgSelect();
   }).catch(e => {
     console.error("載入設定失敗", e);
-    if(e.message.includes('Missing or insufficient permissions')) {
-        alert("⚠️ 雲端設定載入失敗：資料庫權限不足！");
+    if(e.message.includes('Missing or insufficient permissions') || e.code === 'permission-denied') {
+        alert("⚠️ 雲端設定載入失敗：資料庫權限不足！\n請確認 Firebase 安全規則已設定為允許讀取。");
+    } else if(e.message.includes('network') || e.message.includes('offline') || e.code === 'unavailable') {
+        alert("⚠️ 網路連線失敗，請確認網路後重新整理頁面。");
     } else {
-        alert("載入失敗 (" + e.message + ")");
+        alert("載入失敗 (" + e.message + ")\n請按 F12 查看主控台錯誤訊息。");
     }
   });
 }
@@ -644,7 +648,16 @@ function renderRecordSelect() {
     return;
   }
 
+  // 逾時保護：超過 10 秒仍未回應則提示
+  var timeoutId = setTimeout(function() {
+    if (sel.innerHTML.includes('讀取雲端資料中')) {
+      sel.innerHTML = '<option value="">── 連線逾時，請重新整理 ──</option>';
+      console.warn('Firebase 查詢逾時');
+    }
+  }, 10000);
+
   db.collection("records").where("orgId", "==", orgId).get().then(snap => {
+    clearTimeout(timeoutId);
     allCurrentOrgRecords = [];
     if (!snap.empty) {
       snap.forEach(doc => { allCurrentOrgRecords.push(doc.data()); });
@@ -654,6 +667,7 @@ function renderRecordSelect() {
     buildMonthFilterBtns(allCurrentOrgRecords);
     applyMonthFilter(cur);
   }).catch(e => {
+    clearTimeout(timeoutId);
     console.error("讀取個案列表失敗", e);
     sel.innerHTML = '<option value="">── 讀取失敗 ──</option>';
     if(e.message.includes('Missing or insufficient permissions')) {
@@ -1279,6 +1293,7 @@ function renderOrgSelect() {
   });
   if (cur && orgs.find(function(o){ return o.id === cur; })) {
     sel.value = cur;
+    onOrgChange(); // ← 修正：機構已選取時也要觸發
   } else if (orgs.length > 0) {
     sel.value = orgs[0].id;
     onOrgChange(); 
